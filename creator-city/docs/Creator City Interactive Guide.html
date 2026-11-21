@@ -1,0 +1,2556 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="narrative">
+  <meta name="design-style" content="briefing">
+  <title>Creator City — Архитектурный эксплайнер мультиагентной платформы</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@1.43.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+
+      /* 1. Briefing style palette */
+      --background: #faf9f5;
+      --surface-container-low: #ffffff;
+      --surface-container: #f1efe8;
+      --surface-container-high: #e6e2d6;
+
+      --on-surface: #17181a;
+      --on-surface-variant: #56585c;
+
+      --outline: #17181a;
+      --outline-variant: #dedad0;
+
+      --primary: #17181a;
+      --on-primary: #faf9f5;
+      --primary-container: #f2b705;
+      --on-primary-container: #17181a;
+      --secondary: #1f4e5f;
+      --tertiary: #785008;
+      --error: #b42318;
+      --on-error: #ffffff;
+
+      /* Data series */
+      --data-1: #1f4e5f;
+      --data-2: #d99000;
+      --data-3: #2b6e52;
+      --data-4: #b84a39;
+      --data-context: #c4bfb2;
+
+      /* Simulation & status semantic surfaces */
+      --sim-night-bg: #121820;
+      --sim-night-surface: #1b2430;
+      --sim-night-ink: #f1efe8;
+      --sim-night-muted: #9aa8b8;
+      --sim-night-road: #2c394a;
+      --sim-day-grass: #e8efe5;
+      --sim-day-road: #dcd8cc;
+      --sim-gold-soft: #f5e6c4;
+      --sim-pine-soft: #e3efe8;
+      --sim-slate-soft: #e4edf0;
+      --sim-red-soft: #fce8e6;
+      --sim-code-bg: #17191c;
+      --sim-code-ink: #ebeae4;
+      --sim-code-muted: #9398a0;
+
+      /* Fonts (Cyrillic-safe families) */
+      --font-headline: 'Source Serif 4', Georgia, serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-label: 'JetBrains Mono', monospace;
+
+      /* Shape */
+      --rounded: 0.25rem;
+      --rounded-lg: 0.375rem;
+      --rounded-full: 0.25rem;
+
+      /* Style effects */
+      --section-rule: 1.5px solid var(--outline);
+      --card-border: 1px solid var(--outline-variant);
+      --badge-radius: 2px;
+      --heading-tracking: -0.02em;
+      --label-tracking: 0.04em;
+
+      /* 3. Shared tokens */
+      --positive: #2b6e52;
+      --warning: #9e5d00;
+      --focus: #1f4e5f;
+
+      /* Type scale: Narrative */
+      --display-size: clamp(2.1rem, 1.35rem + 3vw, 3.35rem);
+      --headline-size: clamp(1.5rem, 1.15rem + 1.5vw, 2.2rem);
+      --subhead-size: clamp(1.125rem, 1.02rem + 0.45vw, 1.375rem);
+      --body-size: clamp(1rem, 0.96rem + 0.18vw, 1.0625rem);
+      --label-size: clamp(0.75rem, 0.72rem + 0.12vw, 0.8125rem);
+
+      /* Spacing scale */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+      --space-3xl: 5.5rem;
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+      --dur-long: 420ms;
+    }
+
+    /* Base reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    html, body {
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.62;
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: static !important; }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .page-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-2xl);
+      padding: var(--space-xl) var(--space-lg) var(--space-3xl);
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .page-grid * { min-width: 0; }
+
+    /* Briefing Treatments */
+    .dossier-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm);
+      border-bottom: var(--section-rule);
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .dossier-pill {
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 0.72rem;
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--badge-radius);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .dossier-meta {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+    }
+
+    .title {
+      font-family: var(--font-headline);
+      font-weight: 700;
+      font-size: var(--display-size);
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.08;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .section-title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--headline-size);
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.15;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .subsection-title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--subhead-size);
+      line-height: 1.25;
+      color: var(--on-surface);
+      margin: 0 0 var(--space-sm) 0;
+    }
+    .standfirst {
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: var(--subhead-size);
+      line-height: 1.48;
+      color: var(--secondary);
+      margin: var(--space-md) 0 0 0;
+      max-width: 68ch;
+    }
+
+    .prose-col {
+      max-width: 68ch;
+    }
+    .prose-col p {
+      margin: 0 0 var(--space-md) 0;
+    }
+    .prose-col p:last-child {
+      margin-bottom: 0;
+    }
+
+    .figure-card {
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md) var(--space-lg);
+    }
+    .figure-card .value {
+      font-family: var(--font-headline);
+      font-weight: 700;
+      font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.35rem);
+      line-height: 1.1;
+      font-variant-numeric: lining-nums tabular-nums;
+      color: var(--on-surface);
+      margin: var(--space-xs) 0;
+    }
+
+    .index-num {
+      font-family: var(--font-label);
+      font-weight: 600;
+      font-size: var(--label-size);
+      color: var(--secondary);
+      background: var(--surface-container);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: var(--badge-radius);
+    }
+
+    .aside-box {
+      background: var(--surface-container);
+      border-top: var(--section-rule);
+      padding: var(--space-lg);
+      border-radius: 0 0 var(--rounded-lg) var(--rounded-lg);
+    }
+
+    /* Navigation Index Strip */
+    .toc-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(175px, 100%), 1fr));
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+    }
+    .toc-link {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      text-decoration: none;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded);
+      padding: var(--space-sm) var(--space-md);
+      color: var(--on-surface);
+      transition: background-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
+    }
+    .toc-link:hover {
+      background: var(--surface-container);
+      box-shadow: 0 2px 0 var(--outline);
+    }
+    .toc-link .toc-idx {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--secondary);
+      font-weight: 600;
+    }
+    .toc-link .toc-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    /* Key Figures Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+    .kpi-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+      display: block;
+    }
+    .kpi-caption {
+      font-size: 0.85rem;
+      color: var(--on-surface-variant);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    /* Two-column editorial splits */
+    .split-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: var(--space-lg);
+      align-items: start;
+      margin-top: var(--space-lg);
+    }
+    .split-equal {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-lg);
+      margin-top: var(--space-lg);
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+
+    /* Buttons & Controls */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--rounded);
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+      text-decoration: none;
+    }
+    .btn:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--secondary);
+    }
+    .btn-secondary {
+      background: var(--surface-container-low);
+      color: var(--on-surface);
+      border-color: var(--outline-variant);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--surface-container);
+      box-shadow: 0 0 0 1px var(--outline);
+    }
+    .btn-accent {
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      border-color: var(--outline);
+    }
+    .btn-accent:hover:not(:disabled) {
+      background: var(--data-2);
+    }
+    .btn-danger {
+      background: var(--error);
+      color: var(--on-error);
+    }
+    .btn-danger:hover:not(:disabled) {
+      box-shadow: inset 0 0 0 99px rgba(0, 0, 0, 0.12);
+    }
+    .btn-active {
+      background: var(--secondary);
+      color: var(--on-primary);
+      border-color: var(--secondary);
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      align-items: center;
+    }
+
+    /* Form Controls with visible labels */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .control-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      color: var(--on-surface-variant);
+    }
+    .control-select, .control-input {
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      background: var(--surface-container-low);
+      color: var(--on-surface);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--rounded);
+      font-size: 0.9rem;
+    }
+    .control-select {
+      padding-right: var(--space-xl);
+    }
+    .control-select:focus-visible, .control-input:focus-visible {
+      border-color: var(--secondary);
+    }
+
+    /* Tags & Status Chips */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 2px var(--space-sm);
+      border-radius: var(--rounded);
+      background: var(--sim-gold-soft);
+      color: var(--tertiary);
+    }
+    .tag-pine {
+      background: var(--sim-pine-soft);
+      color: var(--positive);
+    }
+    .tag-slate {
+      background: var(--sim-slate-soft);
+      color: var(--secondary);
+    }
+    .tag-error {
+      background: var(--sim-red-soft);
+      color: var(--error);
+    }
+    .tag-neutral {
+      background: var(--surface-container);
+      color: var(--on-surface-variant);
+    }
+
+    /* Inline code & Code blocks */
+    code {
+      font-family: var(--font-label);
+      font-size: 0.86em;
+      background: var(--surface-container);
+      color: var(--secondary);
+      padding: 1px 5px;
+      border-radius: var(--badge-radius);
+    }
+    pre.code-block {
+      margin: 0;
+      background: var(--sim-code-bg);
+      color: var(--sim-code-ink);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md);
+      font-family: var(--font-label);
+      font-size: 0.8rem;
+      line-height: 1.55;
+      overflow-x: auto;
+      white-space: pre;
+      border: 1px solid var(--outline);
+    }
+    pre.code-block code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      text-align: left;
+    }
+    table.data-table th {
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--on-surface-variant);
+      background: var(--surface-container);
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: var(--section-rule);
+    }
+    table.data-table td {
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: 1px solid var(--outline-variant);
+      vertical-align: top;
+    }
+    table.data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Interactive Section 1: City Simulator */
+    .city-stage {
+      background: var(--sim-day-grass);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md);
+      transition: background-color var(--dur-long) var(--ease-out);
+    }
+    .city-stage.is-night {
+      background: var(--sim-night-bg);
+      color: var(--sim-night-ink);
+      border-color: var(--sim-night-road);
+    }
+    .city-hud {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--outline-variant);
+    }
+    .city-stage.is-night .city-hud {
+      border-bottom-color: var(--sim-night-road);
+    }
+    .progress-track {
+      height: 8px;
+      background: var(--surface-container-high);
+      border-radius: var(--rounded);
+      overflow: hidden;
+      flex: 1 1 180px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--secondary);
+      width: 0%;
+      transition: width var(--dur-short) var(--ease-out);
+    }
+    .city-stage.is-night .progress-fill {
+      background: var(--primary-container);
+    }
+
+    .city-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .svg-road { stroke: var(--sim-day-road); stroke-width: 12; stroke-linecap: round; fill: none; }
+    .svg-road-line { stroke: var(--surface-container-low); stroke-width: 1.5; stroke-dasharray: 6 6; fill: none; }
+    .city-stage.is-night .svg-road { stroke: var(--sim-night-road); }
+    .city-stage.is-night .svg-road-line { stroke: var(--sim-night-muted); }
+
+    .svg-bldg { cursor: pointer; transition: transform var(--dur-short) var(--ease-out); }
+    .svg-bldg:hover { transform: translateY(-3px); }
+    .svg-bldg-base { fill: var(--surface-container-low); stroke: var(--outline); stroke-width: 1.5; }
+    .svg-bldg-side { fill: var(--surface-container-high); stroke: var(--outline); stroke-width: 1.5; }
+    .svg-bldg-roof { fill: var(--secondary); stroke: var(--outline); stroke-width: 1.5; }
+    .svg-bldg.is-hq .svg-bldg-roof { fill: var(--primary-container); }
+    .svg-bldg.is-selected .svg-bldg-base { stroke: var(--secondary); stroke-width: 2.5; }
+    .svg-bldg.is-working .svg-bldg-roof { fill: var(--positive); }
+    .svg-bldg.is-needs-you .svg-bldg-roof { fill: var(--error); }
+    .city-stage.is-night .svg-bldg-base { fill: var(--sim-night-surface); stroke: var(--sim-night-muted); }
+    .city-stage.is-night .svg-bldg-side { fill: var(--sim-night-bg); stroke: var(--sim-night-muted); }
+
+    .svg-label-bg { fill: var(--surface-container-low); stroke: var(--outline-variant); stroke-width: 1; }
+    .svg-label-text { fill: var(--on-surface); font-family: var(--font-body); font-size: 11px; font-weight: 600; }
+    .svg-status-text { fill: var(--on-surface-variant); font-family: var(--font-label); font-size: 9.5px; font-weight: 600; }
+    .city-stage.is-night .svg-label-bg { fill: var(--sim-night-surface); stroke: var(--sim-night-road); }
+    .city-stage.is-night .svg-label-text { fill: var(--sim-night-ink); }
+    .city-stage.is-night .svg-status-text { fill: var(--primary-container); }
+
+    .svg-badge-bg { fill: var(--surface-container); stroke: var(--outline-variant); stroke-width: 1; }
+    .svg-bldg.is-working .svg-badge-bg { fill: var(--sim-pine-soft); stroke: var(--positive); }
+    .svg-bldg.is-done .svg-badge-bg { fill: var(--sim-slate-soft); stroke: var(--secondary); }
+    .svg-bldg.is-needs-you .svg-badge-bg { fill: var(--sim-red-soft); stroke: var(--error); }
+
+    /* Interactive Section 2: Strapi Explorer */
+    .collection-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .collection-btn {
+      width: 100%;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-sm) var(--space-md);
+      min-height: 44px;
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded);
+      cursor: pointer;
+      color: var(--on-surface);
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+    .collection-btn:hover {
+      background: var(--surface-container);
+    }
+    .collection-btn.is-active {
+      background: var(--secondary);
+      color: var(--on-primary);
+      border-color: var(--secondary);
+    }
+    .collection-btn.is-active .col-count {
+      color: var(--primary-container);
+    }
+    .col-name {
+      font-family: var(--font-label);
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .col-count {
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      color: var(--on-surface-variant);
+    }
+
+    /* Interactive Section 3: Live Control VNC Simulator */
+    .flow-diagram-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .flow-node {
+      fill: var(--surface-container-low);
+      stroke: var(--outline-variant);
+      stroke-width: 1.5;
+      transition: fill var(--dur-short) var(--ease-out), stroke var(--dur-short) var(--ease-out);
+    }
+    .flow-node.is-active {
+      fill: var(--sim-gold-soft);
+      stroke: var(--outline);
+      stroke-width: 2;
+    }
+    .flow-node.is-alert {
+      fill: var(--sim-red-soft);
+      stroke: var(--error);
+      stroke-width: 2;
+    }
+    .flow-node.is-ok {
+      fill: var(--sim-pine-soft);
+      stroke: var(--positive);
+      stroke-width: 2;
+    }
+    .flow-edge {
+      stroke: var(--data-context);
+      stroke-width: 2;
+      fill: none;
+    }
+    .flow-edge.is-active {
+      stroke: var(--secondary);
+      stroke-width: 2.5;
+    }
+    .flow-edge.is-alert {
+      stroke: var(--error);
+      stroke-width: 2.5;
+    }
+    .flow-txt {
+      fill: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .flow-sub {
+      fill: var(--on-surface-variant);
+      font-family: var(--font-label);
+      font-size: 9.5px;
+    }
+
+    .vnc-window {
+      background: var(--sim-night-bg);
+      color: var(--sim-night-ink);
+      border-radius: var(--rounded-lg);
+      border: 1px solid var(--outline);
+      overflow: hidden;
+    }
+    .vnc-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--sim-night-surface);
+      border-bottom: 1px solid var(--sim-night-road);
+    }
+    .vnc-screen {
+      padding: var(--space-lg);
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: var(--space-md);
+      background: var(--sim-night-bg);
+    }
+    .vnc-browser-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface-container-low);
+      color: var(--on-surface);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      text-align: left;
+      border: 1px solid var(--outline-variant);
+    }
+
+    /* Interactive Section 4: ImageKit & Calendar */
+    .ik-preview-stage {
+      background: var(--surface-container);
+      border: var(--card-border);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+      gap: var(--space-md);
+    }
+    .ik-frame {
+      background: var(--secondary);
+      color: var(--on-primary);
+      border-radius: var(--rounded);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: var(--space-md);
+      border: 2px solid var(--outline);
+      transition: width var(--dur-short) var(--ease-out), height var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out);
+    }
+    .ik-frame.is-bg-removed {
+      background: var(--surface-container-low);
+      color: var(--on-surface);
+      border-style: dashed;
+    }
+    .ik-frame.ratio-1-1 { width: 170px; height: 170px; }
+    .ik-frame.ratio-9-16 { width: 120px; height: 213px; }
+    .ik-frame.ratio-16-9 { width: 240px; height: 135px; }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: var(--space-xs);
+    }
+    .cal-cell {
+      min-height: 54px;
+      padding: var(--space-xs);
+      background: var(--surface-container-low);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--rounded);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+    .cal-cell:hover { background: var(--surface-container); }
+    .cal-cell.is-scheduled {
+      background: var(--sim-gold-soft);
+      border-color: var(--outline);
+    }
+    .cal-day-num {
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      color: var(--on-surface-variant);
+    }
+    .cal-slot-tag {
+      font-family: var(--font-label);
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--on-surface);
+      line-height: 1.15;
+    }
+
+    /* Interactive Section 5: Chart container */
+    .chart-box {
+      position: relative;
+      min-height: 290px;
+      width: 100%;
+    }
+
+    /* Interactive Section 6: Checklist */
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--surface-container-low);
+      border: var(--card-border);
+      border-radius: var(--rounded);
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+    .checklist-item:hover {
+      background: var(--surface-container);
+    }
+    .checklist-item.is-done {
+      background: var(--sim-pine-soft);
+      border-color: var(--positive);
+    }
+    .check-box-ui {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      border: 1.5px solid var(--outline);
+      border-radius: var(--badge-radius);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-container-low);
+      margin-top: 2px;
+    }
+    .checklist-item.is-done .check-box-ui {
+      background: var(--positive);
+      border-color: var(--positive);
+      color: var(--on-error);
+    }
+
+    /* Inline callout banner */
+    .inline-notice {
+      padding: var(--space-sm) var(--space-md);
+      border-left: 4px solid var(--secondary);
+      background: var(--surface-container);
+      border-radius: 0 var(--rounded) var(--rounded) 0;
+      font-size: 0.9rem;
+    }
+    .inline-notice.is-alert {
+      border-left-color: var(--error);
+      background: var(--sim-red-soft);
+    }
+    .inline-notice.is-ok {
+      border-left-color: var(--positive);
+      background: var(--sim-pine-soft);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 860px) {
+      .split-grid, .split-equal {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .page-grid {
+        padding: var(--space-md);
+        gap: var(--space-xl);
+      }
+      .cal-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-grid">
+
+    <!-- HERO DOSSIER -->
+    <header>
+      <div class="dossier-bar">
+        <span class="dossier-pill">ДОСЬЕ АРХИТЕКТУРЫ</span>
+        <span class="dossier-meta">CREATOR CITY • МУЛЬТИАГЕНТНАЯ ПЛАТФОРМА • NEXT.JS + OPENAI AGENTS SDK + STRAPI MCP</span>
+      </div>
+      <h1 class="title">Creator City: как устроена мультиагентная система создания и публикации контента</h1>
+      <p class="standfirst">
+        Подробный технический разбор платформы, где контент-команда организована как интерактивный 3D-город: один запрос в Штаб-квартиру запускает оркестрацию 6 ИИ-агентов, обмен ID-ссылками через Strapi MCP, работу в изолированном облачном Linux-ПК, перехват управления Live Control и автопостинг через Composio.
+      </p>
+
+      <nav class="toc-strip" aria-label="Навигация по разделам">
+        <a class="toc-link" href="#sec-city">
+          <span class="toc-idx">01 • ГОРОД И HQ</span>
+          <span class="toc-name">Штаб и 6 ролей агентов</span>
+        </a>
+        <a class="toc-link" href="#sec-strapi">
+          <span class="toc-idx">02 • ПАМЯТЬ И ДАННЫЕ</span>
+          <span class="toc-name">Strapi MCP и 10 коллекций</span>
+        </a>
+        <a class="toc-link" href="#sec-live-control">
+          <span class="toc-idx">03 • ОБЛАЧНЫЙ ПК</span>
+          <span class="toc-name">Live Control и Pusher</span>
+        </a>
+        <a class="toc-link" href="#sec-integrations">
+          <span class="toc-idx">04 • ИНТЕГРАЦИИ</span>
+          <span class="toc-name">ImageKit, Composio и Календарь</span>
+        </a>
+        <a class="toc-link" href="#sec-sdk">
+          <span class="toc-idx">05 • SDK И СТОИМОСТЬ</span>
+          <span class="toc-name">Тесты и экономика LLM</span>
+        </a>
+        <a class="toc-link" href="#sec-deploy">
+          <span class="toc-idx">06 • ЗАПУСК И ДЕПЛОЙ</span>
+          <span class="toc-name">Локальный старт и Vercel</span>
+        </a>
+      </nav>
+
+      <div class="kpi-grid">
+        <div class="figure-card">
+          <span class="kpi-label">СТАРТОВЫЙ СОСТАВ</span>
+          <div class="value">6 + 1</div>
+          <p class="kpi-caption">Шесть профильных агентов и одна постоянная Штаб-квартира (Empire, Crown или Twin)</p>
+        </div>
+        <div class="figure-card">
+          <span class="kpi-label">ЯДРО ДАННЫХ (STRAPI 5)</span>
+          <div class="value">10 таблиц</div>
+          <p class="kpi-caption">Коллекции для общей памяти, артефактов, сессий облачных ПК и черновиков</p>
+        </div>
+        <div class="figure-card">
+          <span class="kpi-label">ОБЛАЧНЫЙ ПК (CLOUDHIKE)</span>
+          <div class="value">1 CPU / 2 ГБ</div>
+          <p class="kpi-caption">Базовый Ubuntu-инстанс (10 ГБ диск) с автостопом через 3 минуты простоя</p>
+        </div>
+        <div class="figure-card">
+          <span class="kpi-label">ВНЕШНИЕ КАНАЛЫ (COMPOSIO)</span>
+          <div class="value">20+ систем</div>
+          <p class="kpi-caption">OAuth-доступ к Instagram, YouTube, X, LinkedIn, Notion с проверкой прав на сервере</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 01: CITY & AGENTS -->
+    <section id="sec-city">
+      <div class="dossier-bar">
+        <span class="dossier-pill">РАЗДЕЛ 01</span>
+        <span class="dossier-meta">ОРКЕСТРАЦИЯ ГОРОДА • HEADQUARTERS И СТАРТОВАЯ КОМАНДА</span>
+      </div>
+      <h2 class="section-title">Один запрос в Штаб-квартиру запускает конвейер из шести агентов, а карта города отделена от графа исполнения</h2>
+
+      <div class="prose-col" style="margin-top: var(--space-md);">
+        <p>
+          В Creator City каждый ИИ-специалист представлен отдельным зданием, а центральным узлом управления выступает <strong>Headquarters (Штаб-квартира)</strong>. При первом входе пользователь создаёт собственный штаб на маршруте <code>/headquarters/new</code>: задаёт название, выбирает архитектурный стиль (<strong>Empire</strong> — золотой ар-деко со шпилем, <strong>Crown</strong> — голубое стекло с короной, или <strong>Twin</strong> — две лавандовые башни со скайбриджем), настраивает тонировку стёкол, высоту и благоустройство.
+        </p>
+        <p>
+          Важный архитектурный инвариант проекта: библиотека <code>@/components/agent-city</code> (<code>AgentCity</code>, <code>HeadquartersBuilding</code>, <code>AgentBuilding</code>, <code>RoadNetwork</code>, <code>AddAgentDialog</code>) отвечает только за изометрический рендер, перетаскивание зданий (drag-and-drop), зум и смену дня/ночи. Реальная маршрутизация и выполнение задач живут на сервере — поэтому перестановка зданий на карте или смена интерьера (<em>writing desk</em>, <em>art gallery</em>) не меняет и не ломает логику выполнения пайплайна.
+        </p>
+      </div>
+
+      <!-- INTERACTIVE LAB 1: CITY SIMULATOR -->
+      <div class="figure-card" style="margin-top: var(--space-lg);">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--space-md); margin-bottom: var(--space-md);">
+          <div>
+            <span class="index-num">ИНТЕРАКТИВ 01</span>
+            <h3 class="subsection-title" style="margin-top: var(--space-xs); margin-bottom: 0;">Симулятор города и пошаговой оркестрации Штаб-квартиры</h3>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" id="btn-day-night" onclick="toggleCityTheme()">Режим: День</button>
+            <button type="button" class="btn btn-secondary" onclick="setHqStyle('Empire')" id="hq-btn-Empire">Empire</button>
+            <button type="button" class="btn btn-secondary" onclick="setHqStyle('Crown')" id="hq-btn-Crown">Crown</button>
+            <button type="button" class="btn btn-secondary" onclick="setHqStyle('Twin')" id="hq-btn-Twin">Twin</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) auto auto auto; gap: var(--space-sm); align-items: end; margin-bottom: var(--space-md);">
+          <div class="control-group">
+            <label class="control-label" for="scenario-select">Сценарий промпта в Штаб-квартиру (Headquarters)</label>
+            <select id="scenario-select" class="control-select" onchange="selectCityScenario(this.value)">
+              <option value="gadgets">«Сделай 60-сек видео о бюджетных ИИ-гаджетах до $50» (полный цикл 1–6)</option>
+              <option value="trends">«Найди тренд в Google Trends, преврати в 45-сек Instagram Reel»</option>
+              <option value="clipgenie">«Смонтируй загруженный клип через Clip Genie в стиле Viral Pop и запланируй»</option>
+              <option value="insta">«Создай квадратный баннер 1:1 Happy New Year и сохрани черновик для Instagram»</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="runCityPipelineStep()">Следующий шаг</button>
+          <button type="button" class="btn btn-accent" onclick="toggleAutoPlayPipeline()" id="btn-autoplay">Авто-запуск</button>
+          <button type="button" class="btn btn-secondary" onclick="enqueueExtraTask()">+ В очередь HQ</button>
+        </div>
+
+        <div id="queue-notice" class="inline-notice" style="display: none; margin-bottom: var(--space-md);"></div>
+
+        <div class="split-grid" style="margin-top: 0;">
+          <div class="city-stage" id="city-stage">
+            <div class="city-hud">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span class="kpi-label" style="color: inherit; opacity: 0.85;">LIVE WORK PROGRESS</span>
+                <strong id="hud-step-title" style="font-size: 0.9rem;">Ожидание запроса в Штаб-квартиру</strong>
+              </div>
+              <div class="progress-track" aria-label="Прогресс пайплайна">
+                <div class="progress-fill" id="hud-progress-fill"></div>
+              </div>
+              <span id="hud-progress-pct" class="kpi-label" style="color: inherit;">0%</span>
+            </div>
+
+            <svg class="city-svg" viewBox="0 0 640 420" role="img" aria-label="Интерактивная карта агентов Creator City">
+              <!-- Roads connecting HQ (320, 210) to 6 buildings -->
+              <path class="svg-road" d="M320,210 L130,105 M320,210 L320,72 M320,210 L510,105 M320,210 L130,320 M320,210 L320,352 M320,210 L510,320" />
+              <path class="svg-road-line" d="M320,210 L130,105 M320,210 L320,72 M320,210 L510,105 M320,210 L130,320 M320,210 L320,352 M320,210 L510,320" />
+
+              <!-- Building: Research Agent (Step 1) -->
+              <g class="svg-bldg" id="bldg-research" onclick="selectAgentCard('research')" transform="translate(80, 58)">
+                <rect class="svg-bldg-side" x="50" y="22" width="18" height="38" rx="2" />
+                <rect class="svg-bldg-base" x="14" y="22" width="38" height="38" rx="2" />
+                <polygon class="svg-bldg-roof" points="12,22 33,8 54,22" />
+                <rect class="svg-badge-bg" x="2" y="-12" width="96" height="18" rx="3" />
+                <text class="svg-status-text" id="status-research" x="50" y="0" text-anchor="middle">Step 1 • Idle</text>
+                <rect class="svg-label-bg" x="0" y="64" width="100" height="20" rx="3" />
+                <text class="svg-label-text" x="50" y="78" text-anchor="middle">Research Agent</text>
+              </g>
+
+              <!-- Building: Script Writer (Step 2) -->
+              <g class="svg-bldg" id="bldg-script" onclick="selectAgentCard('script')" transform="translate(270, 22)">
+                <rect class="svg-bldg-side" x="52" y="20" width="16" height="40" rx="2" />
+                <rect class="svg-bldg-base" x="14" y="20" width="40" height="40" rx="2" />
+                <rect class="svg-bldg-roof" x="14" y="10" width="40" height="10" rx="2" />
+                <rect class="svg-badge-bg" x="2" y="-12" width="96" height="18" rx="3" />
+                <text class="svg-status-text" id="status-script" x="50" y="0" text-anchor="middle">Step 2 • Idle</text>
+                <rect class="svg-label-bg" x="0" y="64" width="100" height="20" rx="3" />
+                <text class="svg-label-text" x="50" y="78" text-anchor="middle">Script Writer</text>
+              </g>
+
+              <!-- Building: Voice Agent (Step 3) -->
+              <g class="svg-bldg" id="bldg-voice" onclick="selectAgentCard('voice')" transform="translate(460, 58)">
+                <rect class="svg-bldg-side" x="52" y="22" width="16" height="38" rx="2" />
+                <rect class="svg-bldg-base" x="16" y="22" width="38" height="38" rx="2" />
+                <rect class="svg-bldg-roof" x="28" y="2" width="12" height="20" rx="2" />
+                <rect class="svg-badge-bg" x="2" y="-12" width="96" height="18" rx="3" />
+                <text class="svg-status-text" id="status-voice" x="50" y="0" text-anchor="middle">Step 3 • Idle</text>
+                <rect class="svg-label-bg" x="0" y="64" width="100" height="20" rx="3" />
+                <text class="svg-label-text" x="50" y="78" text-anchor="middle">Voice Agent</text>
+              </g>
+
+              <!-- Building: Headquarters (Center) -->
+              <g class="svg-bldg is-hq is-selected" id="bldg-hq" onclick="selectAgentCard('hq')" transform="translate(265, 152)">
+                <g id="hq-shape-empire">
+                  <rect class="svg-bldg-side" x="68" y="24" width="22" height="58" rx="2" />
+                  <rect class="svg-bldg-base" x="20" y="24" width="48" height="58" rx="2" />
+                  <rect class="svg-bldg-roof" x="28" y="10" width="32" height="14" rx="2" />
+                  <polygon class="svg-bldg-roof" points="40,10 44,-6 48,10" />
+                </g>
+                <g id="hq-shape-crown" style="display: none;">
+                  <rect class="svg-bldg-side" x="68" y="20" width="22" height="62" rx="2" />
+                  <rect class="svg-bldg-base" x="18" y="20" width="50" height="62" rx="2" />
+                  <polygon class="svg-bldg-roof" points="18,20 28,6 43,16 58,6 68,20" />
+                </g>
+                <g id="hq-shape-twin" style="display: none;">
+                  <rect class="svg-bldg-base" x="14" y="16" width="26" height="66" rx="2" />
+                  <rect class="svg-bldg-base" x="64" y="16" width="26" height="66" rx="2" />
+                  <rect class="svg-bldg-roof" x="34" y="34" width="36" height="10" rx="1" />
+                  <rect class="svg-bldg-roof" x="14" y="8" width="26" height="8" rx="1" />
+                  <rect class="svg-bldg-roof" x="64" y="8" width="26" height="8" rx="1" />
+                </g>
+                <rect class="svg-badge-bg" x="4" y="-22" width="102" height="18" rx="3" />
+                <text class="svg-status-text" id="status-hq" x="55" y="-10" text-anchor="middle">HQ • Ready</text>
+                <rect class="svg-label-bg" x="4" y="86" width="102" height="20" rx="3" />
+                <text class="svg-label-text" x="55" y="100" text-anchor="middle" id="hq-map-name">HQ (Empire)</text>
+              </g>
+
+              <!-- Building: Media Agent (Step 4) -->
+              <g class="svg-bldg" id="bldg-media" onclick="selectAgentCard('media')" transform="translate(80, 272)">
+                <rect class="svg-bldg-side" x="50" y="22" width="18" height="38" rx="2" />
+                <rect class="svg-bldg-base" x="14" y="22" width="38" height="38" rx="2" />
+                <rect class="svg-bldg-roof" x="14" y="14" width="38" height="8" rx="2" />
+                <rect class="svg-badge-bg" x="2" y="-12" width="96" height="18" rx="3" />
+                <text class="svg-status-text" id="status-media" x="50" y="0" text-anchor="middle">Step 4 • Idle</text>
+                <rect class="svg-label-bg" x="0" y="64" width="100" height="20" rx="3" />
+                <text class="svg-label-text" x="50" y="78" text-anchor="middle">Media Agent</text>
+              </g>
+
+              <!-- Building: Video Editor (Step 5) -->
+              <g class="svg-bldg" id="bldg-editor" onclick="selectAgentCard('editor')" transform="translate(270, 304)">
+                <rect class="svg-bldg-side" x="52" y="20" width="18" height="40" rx="2" />
+                <rect class="svg-bldg-base" x="12" y="20" width="42" height="40" rx="2" />
+                <polygon class="svg-bldg-roof" points="12,20 33,8 54,20" />
+                <rect class="svg-badge-bg" x="2" y="-12" width="96" height="18" rx="3" />
+                <text class="svg-status-text" id="status-editor" x="50" y="0" text-anchor="middle">Step 5 • Idle</text>
+                <rect class="svg-label-bg" x="0" y="64" width="100" height="20" rx="3" />
+                <text class="svg-label-text" x="50" y="78" text-anchor="middle">Video Editor</text>
+              </g>
+
+              <!-- Building: Publish Agent (Step 6) -->
+              <g class="svg-bldg" id="bldg-publish" onclick="selectAgentCard('publish')" transform="translate(460, 272)">
+                <rect class="svg-bldg-side" x="52" y="20" width="16" height="40" rx="2" />
+                <rect class="svg-bldg-base" x="14" y="20" width="40" height="40" rx="2" />
+                <rect class="svg-bldg-roof" x="20" y="8" width="28" height="12" rx="2" />
+                <rect class="svg-badge-bg" x="2" y="-12" width="96" height="18" rx="3" />
+                <text class="svg-status-text" id="status-publish" x="50" y="0" text-anchor="middle">Step 6 • Idle</text>
+                <rect class="svg-label-bg" x="0" y="64" width="100" height="20" rx="3" />
+                <text class="svg-label-text" x="50" y="78" text-anchor="middle">Publish Agent</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Right Inspector Panel -->
+          <div class="aside-box" style="border-radius: var(--rounded-lg); height: 100%; display: flex; flex-direction: column; gap: var(--space-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+              <span class="tag tag-slate" id="insp-badge">ОРКЕСТРАТОР</span>
+              <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: 4px 10px; font-size: 0.78rem;" onclick="resetCityPipeline()">Сбросить цикл</button>
+            </div>
+            <div>
+              <h4 class="subsection-title" id="insp-title" style="margin-bottom: var(--space-xs);">Headquarters (Штаб-квартира)</h4>
+              <p id="insp-desc" style="margin: 0; font-size: 0.92rem; color: var(--on-surface-variant);">
+                Мозг города и мастер-агент. Принимает единый запрос пользователя, декомпозирует его на шаги, назначает исполнителей и ставит параллельные запросы в очередь (Queue).
+              </p>
+            </div>
+            <div style="border-top: 1px solid var(--outline-variant); padding-top: var(--space-sm);">
+              <span class="kpi-label" style="margin-bottom: var(--space-xs);">ИНСТРУМЕНТЫ И ПРОТОКОЛЫ</span>
+              <div id="insp-tools" class="btn-row" style="gap: var(--space-xs);"></div>
+            </div>
+            <div style="border-top: 1px solid var(--outline-variant); padding-top: var(--space-sm);">
+              <span class="kpi-label" style="margin-bottom: var(--space-xs);">ЖУРНАЛ ВЫПОЛНЕНИЯ И АРТЕФАКТ</span>
+              <div id="insp-log" style="background: var(--surface-container-low); border: var(--card-border); border-radius: var(--rounded); padding: var(--space-sm) var(--space-md); font-size: 0.85rem; line-height: 1.5;">
+                Выберите сценарий сверху и нажмите «Следующий шаг» или кликните по любому из 6 зданий на карте.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 Agents Compact Reference Cards -->
+      <div class="card-grid">
+        <div class="figure-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+            <span class="index-num">ШАГ 01</span>
+            <span class="tag tag-slate">Cloud PC + Strapi MCP</span>
+          </div>
+          <h3 class="subsection-title">Research Agent</h3>
+          <p class="kpi-caption">Открывает реальный Chrome на Cloud Computer, собирает тренды в Google Trends и Hacker News, формирует исследовательский бриф и пишет ID записи в коллекцию <code>memories</code>.</p>
+        </div>
+        <div class="figure-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+            <span class="index-num">ШАГ 02</span>
+            <span class="tag tag-slate">Strapi MCP + Artifacts</span>
+          </div>
+          <h3 class="subsection-title">Script Writer</h3>
+          <p class="kpi-caption">Считывает <code>research_brief</code> из общей памяти по ID, превращает факты в сценарий с сильным хуком, сценарной сеткой и CTA, сохраняя документ в <code>artifacts</code>.</p>
+        </div>
+        <div class="figure-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+            <span class="index-num">ШАГ 03</span>
+            <span class="tag tag-slate">Deepgram / ElevenLabs</span>
+          </div>
+          <h3 class="subsection-title">Voice Agent</h3>
+          <p class="kpi-caption">Забирает ID сценария, генерирует выразительную озвучку (например, голос Nova в Deepgram или ElevenLabs) и сохраняет <code>.mp3</code> в медиабиблиотеку Strapi.</p>
+        </div>
+        <div class="figure-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+            <span class="index-num">ШАГ 04</span>
+            <span class="tag tag-slate">ImageKit AI + Browser</span>
+          </div>
+          <h3 class="subsection-title">Media Agent</h3>
+          <p class="kpi-caption">Генерирует и адаптирует визуалы (<code>generate_image</code>, <code>transform_image</code>) через ImageKit или скачивает релевантный B-roll с помощью браузера облачного ПК.</p>
+        </div>
+        <div class="figure-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+            <span class="index-num">ШАГ 05</span>
+            <span class="tag tag-slate">Cloud PC + Clip Genie</span>
+          </div>
+          <h3 class="subsection-title">Video Editor</h3>
+          <p class="kpi-caption">Запускает веб-редактор <code>clipgenie.app</code>, загружает видео или ассеты, применяет субтитры <em>Viral Pop</em>, зумы и музыку, затем экспортирует готовый <code>.mp4</code> в артефакты.</p>
+        </div>
+        <div class="figure-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+            <span class="index-num">ШАГ 06</span>
+            <span class="tag tag-slate">Composio + Cron</span>
+          </div>
+          <h3 class="subsection-title">Publish Agent</h3>
+          <p class="kpi-caption">Готовит заголовки, хэштеги и черновики в коллекцию <code>posts</code>, проверяет серверные права <code>confirm_action</code> и публикует через Composio по календарю.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 02: STRAPI MCP & SHARED MEMORY -->
+    <section id="sec-strapi">
+      <div class="dossier-bar">
+        <span class="dossier-pill">РАЗДЕЛ 02</span>
+        <span class="dossier-meta">STRAPI CMS 5 • MODEL CONTEXT PROTOCOL • ОБЩАЯ ПАМЯТЬ И АРТЕФАКТЫ</span>
+      </div>
+      <h2 class="section-title">Вместо пересылки мегабайтов текста в промптах агенты передают друг другу ID записей в Strapi MCP</h2>
+
+      <div class="prose-col" style="margin-top: var(--space-md);">
+        <p>
+          Главная проблема длинных мультиагентных цепочек — раздувание контекстного окна и рост стоимости токенов при передаче сырых отчётов от агента к агенту. В Creator City применяется паттерн <strong>Hierarchical Orchestrator + Shared Memory</strong> на базе Strapi CMS и протокола MCP (<code>MCP: { enabled: true }</code> в <code>config/server.js</code>).
+        </p>
+        <p>
+          Когда <strong>Research Agent</strong> завершает поиск, он вызывает <code>strapiMcpMemory.create</code>, записывает структурированный бриф в таблицу <code>memories</code> и возвращает в Штаб-квартиру только компактный идентификатор (например, <code>memory_id_12345</code>). Следующий агент (<strong>Script Writer</strong>) получает этот ID, сам вызывает <code>strapiMcpMemory.find</code> и сохраняет готовый сценарий в коллекцию <code>artifacts</code>. Благодаря такому подходу каждый новый запуск задачи начинается с <strong>чистого чата</strong> (чтобы старая история не путала LLM), а весь контекст и загруженные пользователем файлы (изображения, видео, PDF) лежат в едином файловом проводнике <strong>Artifacts</strong>.
+        </p>
+      </div>
+
+      <!-- INTERACTIVE LAB 2: 10 STRAPI COLLECTIONS INSPECTOR -->
+      <div class="figure-card" style="margin-top: var(--space-lg);">
+        <span class="index-num">ИНТЕРАКТИВ 02</span>
+        <h3 class="subsection-title" style="margin-top: var(--space-xs);">Инспектор 10 коллекций Strapi CMS и обмена данными через MCP</h3>
+        <p style="margin: 0 0 var(--space-md) 0; color: var(--on-surface-variant); font-size: 0.92rem;">
+          Выберите любую из 10 коллекций бэкенда Strapi, чтобы увидеть её поля, связи, автоматически сгенерированный REST API-эндпоинт и пример полезной нагрузки.
+        </p>
+
+        <div class="split-grid" style="margin-top: 0;">
+          <div class="collection-list" id="strapi-collection-list" role="tablist" aria-label="Коллекции Strapi CMS"></div>
+
+          <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+              <div>
+                <h4 class="subsection-title" id="col-detail-title" style="margin-bottom: 2px;">memories</h4>
+                <span class="kpi-label" id="col-detail-endpoint">REST API: GET / POST /api/memories</span>
+              </div>
+              <span class="tag tag-pine" id="col-detail-role">Shared Memory MCP</span>
+            </div>
+            <p id="col-detail-desc" style="margin: 0; font-size: 0.92rem;"></p>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Поле</th>
+                    <th>Тип / Связь</th>
+                    <th>Назначение</th>
+                  </tr>
+                </thead>
+                <tbody id="col-detail-fields"></tbody>
+              </table>
+            </div>
+
+            <div>
+              <span class="kpi-label" style="margin-bottom: var(--space-xs);">ПРИМЕР ОБМЕНА / PAYLOAD</span>
+              <pre class="code-block"><code id="col-detail-json"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IDE MCP CONFIGURATION SWITCHER -->
+      <div class="aside-box" style="margin-top: var(--space-lg);">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+          <div>
+            <h3 class="subsection-title" style="margin-bottom: 2px;">Подключение Strapi MCP в разных IDE: Claude Code и Antigravity IDE</h3>
+            <p style="margin: 0; font-size: 0.9rem; color: var(--on-surface-variant);">
+              Протокол MCP не привязан жёстко к одной среде — при смене IDE меняется лишь формат конфигурации.
+            </p>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary btn-active" id="mcp-tab-claude" onclick="switchMcpTab('claude')">Claude Code (CLI)</button>
+            <button type="button" class="btn btn-secondary" id="mcp-tab-antigravity" onclick="switchMcpTab('antigravity')">Antigravity IDE (TOML)</button>
+            <button type="button" class="btn btn-secondary" id="mcp-tab-server" onclick="switchMcpTab('server')">Strapi config/server.js</button>
+          </div>
+        </div>
+        <pre class="code-block"><code id="mcp-code-preview"></code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 03: CLOUD COMPUTER & LIVE CONTROL -->
+    <section id="sec-live-control">
+      <div class="dossier-bar">
+        <span class="dossier-pill">РАЗДЕЛ 03</span>
+        <span class="dossier-meta">CLOUDHIKE CLOUD COMPUTER • PUSHER WEBSOCKETS • HUMAN-IN-THE-LOOP</span>
+      </div>
+      <h2 class="section-title">Механизм Live Control: как статус «needs_you» через вебхук Strapi и Pusher передаёт браузер человеку</h2>
+
+      <div class="prose-col" style="margin-top: var(--space-md);">
+        <p>
+          Когда API недоступен (сбор трендов в Google Trends, озвучка в Deepgram/ElevenLabs, автоматический монтаж в <code>clipgenie.app</code>), агент запускает изолированную виртуальную машину Ubuntu Linux на платформе <strong>CloudHike.dev</strong> с браузером Google Chrome, терминалом и файловым менеджером. После раннего рефакторинга скрейпинга задержка поиска и переключения вкладок снизилась с 31 секунды до <strong>1–3 секунд</strong>, а параметр <strong>Stop when idle</strong> (3 минуты) автоматически выключает ВМ после завершения задачи.
+        </p>
+        <p>
+          Но реальные сайты требуют авторизации, 2FA или решения капчи. Поскольку HTTP-протокол односторонний, сервер Next.js не может «постучаться» в браузер сам. Поэтому цепочка работает через <strong>Webhooks + Pusher WebSockets</strong>: Strapi фиксирует смену статуса на <code>needs_you</code>, отправляет POST-вебхук с заголовком <code>x-strapi-secret</code> в Next.js, а сервер пушит событие в приватный сокет-канал <code>private-session-{sessionId}</code>. Хук <code>useLiveControl</code> открывает VNC/WebRTC-трансляцию (<code>liveUrl</code>), пользователь перехватывает курсор (<code>isInteractive = true</code>), вводит пароль (куки сохраняются в <code>cc_session</code>) и возвращает управление агенту.
+        </p>
+      </div>
+
+      <!-- INTERACTIVE LAB 3: LIVE CONTROL SIMULATOR -->
+      <div class="figure-card" style="margin-top: var(--space-lg);">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+          <div>
+            <span class="index-num">ИНТЕРАКТИВ 03</span>
+            <h3 class="subsection-title" style="margin-top: var(--space-xs); margin-bottom: 0;">Симулятор перехвата управления Live Control и VNC-сессии</h3>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-secondary" onclick="setLiveControlStage(1)" id="lc-btn-1">1. Работа агента</button>
+            <button type="button" class="btn btn-danger" onclick="setLiveControlStage(2)" id="lc-btn-2">2. Триггер needs_you</button>
+            <button type="button" class="btn btn-secondary" onclick="setLiveControlStage(3)" id="lc-btn-3">3. Webhook + Pusher</button>
+            <button type="button" class="btn btn-accent" onclick="setLiveControlStage(4)" id="lc-btn-4">4. Перехват (VNC)</button>
+            <button type="button" class="btn btn-primary" onclick="setLiveControlStage(5)" id="lc-btn-5">5. Возврат агенту</button>
+          </div>
+        </div>
+
+        <!-- SVG Pipeline Signal Flow -->
+        <div style="background: var(--surface-container); border-radius: var(--rounded-lg); padding: var(--space-md); margin-bottom: var(--space-md);">
+          <svg class="flow-diagram-svg" viewBox="0 0 820 120" role="img" aria-label="Схема прохождения сигнала Live Control">
+            <path class="flow-edge" id="lc-edge-1" d="M148,55 L196,55" />
+            <path class="flow-edge" id="lc-edge-2" d="M336,55 L384,55" />
+            <path class="flow-edge" id="lc-edge-3" d="M518,55 L566,55" />
+            <path class="flow-edge" id="lc-edge-4" d="M688,55 L726,55" />
+
+            <g transform="translate(12, 20)">
+              <rect class="flow-node" id="lc-node-1" width="136" height="70" rx="6" />
+              <text class="flow-txt" x="68" y="28" text-anchor="middle">1. Cloud PC</text>
+              <text class="flow-sub" x="68" y="45" text-anchor="middle">Chrome / Clip Genie</text>
+              <text class="flow-sub" x="68" y="59" text-anchor="middle" id="lc-sub-1">status: running</text>
+            </g>
+            <g transform="translate(196, 20)">
+              <rect class="flow-node" id="lc-node-2" width="140" height="70" rx="6" />
+              <text class="flow-txt" x="70" y="28" text-anchor="middle">2. Strapi CMS</text>
+              <text class="flow-sub" x="70" y="45" text-anchor="middle">computer_sessions</text>
+              <text class="flow-sub" x="70" y="59" text-anchor="middle" id="lc-sub-2">entry.update</text>
+            </g>
+            <g transform="translate(384, 20)">
+              <rect class="flow-node" id="lc-node-3" width="134" height="70" rx="6" />
+              <text class="flow-txt" x="67" y="28" text-anchor="middle">3. Next.js API</text>
+              <text class="flow-sub" x="67" y="45" text-anchor="middle">/api/webhooks/strapi</text>
+              <text class="flow-sub" x="67" y="59" text-anchor="middle" id="lc-sub-3">x-strapi-secret</text>
+            </g>
+            <g transform="translate(566, 20)">
+              <rect class="flow-node" id="lc-node-4" width="122" height="70" rx="6" />
+              <text class="flow-txt" x="61" y="28" text-anchor="middle">4. Pusher</text>
+              <text class="flow-sub" x="61" y="45" text-anchor="middle">private-session-id</text>
+              <text class="flow-sub" x="61" y="59" text-anchor="middle" id="lc-sub-4">WebSocket push</text>
+            </g>
+            <g transform="translate(726, 20)">
+              <rect class="flow-node" id="lc-node-5" width="84" height="70" rx="6" />
+              <text class="flow-txt" x="42" y="28" text-anchor="middle">5. UI</text>
+              <text class="flow-sub" x="42" y="45" text-anchor="middle">VNC /</text>
+              <text class="flow-sub" x="42" y="59" text-anchor="middle" id="lc-sub-5">WebRTC</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="split-equal" style="margin-top: 0;">
+          <!-- Simulated VNC / WebRTC Modal View -->
+          <div class="vnc-window">
+            <div class="vnc-topbar">
+              <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                <span class="tag tag-slate" id="vnc-status-pill">running</span>
+                <span style="font-family: var(--font-label); font-size: 0.78rem;">Live Control — Video Editor (liveUrl)</span>
+              </div>
+              <div class="btn-row">
+                <button type="button" class="btn btn-accent" style="min-height: 34px; padding: 4px 10px; font-size: 0.78rem;" id="vnc-action-btn" onclick="toggleVncTakeover()">Перехватить управление</button>
+              </div>
+            </div>
+            <div class="vnc-screen" id="vnc-screen-body">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Technical Narrative & Payload for Current Stage -->
+          <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+            <div id="lc-stage-explain" class="inline-notice">
+              Агент Video Editor работает автономно в изолированном браузере Chrome на Cloud Computer.
+            </div>
+            <div>
+              <span class="kpi-label" style="margin-bottom: var(--space-xs);">КОД / СОБЫТИЕ НА ЭТОМ ЭТАПЕ</span>
+              <pre class="code-block"><code id="lc-stage-code"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 04: IMAGEKIT, COMPOSIO & CALENDAR -->
+    <section id="sec-integrations">
+      <div class="dossier-bar">
+        <span class="dossier-pill">РАЗДЕЛ 04</span>
+        <span class="dossier-meta">IMAGEKIT CDN • COMPOSIO OAUTH • CONTENT CALENDAR И CLOUDHIKE JOBS</span>
+      </div>
+      <h2 class="section-title">Генерация и адаптация графики в ImageKit и безопасная автопубликация в соцсети через Composio</h2>
+
+      <div class="split-equal" style="margin-top: var(--space-md);">
+        <div class="prose-col">
+          <h3 class="subsection-title">ImageKit + Strapi Media Library</h3>
+          <p>
+            Плагин <code>strapi-plugin-imagekit</code> переносит хранение всех загрузок и сгенерированных ассетов из локального диска в облачную папку <code>/creator city</code> и раздаёт их через CDN. <strong>Media Agent</strong> использует два инструмента: <code>generate_image</code> и <code>transform_image</code>.
+          </p>
+          <p>
+            Вся адаптация форматов (обложки <code>16:9</code> для YouTube, квадрат <code>1:1</code> для ленты, вертикаль <code>9:16</code> для Reels/Shorts, умное кадрирование <code>fo-auto</code>, удаление фона или апскейл) происходит мгновенно через URL-параметры без тяжёлых локальных SDK. В настройках Media Library Strapi рекомендуется отключить <em>responsive-friendly</em> и <em>size optimization</em>, чтобы не плодить лишние дубликаты файлов.
+          </p>
+        </div>
+        <div class="prose-col">
+          <h3 class="subsection-title">Composio, права агентов и CloudHike Jobs</h3>
+          <p>
+            Платформа <strong>Composio</strong> даёт агентам доступ к более чем 100 сервисам (Instagram, YouTube, X, LinkedIn, Notion, Google Sheets) через OAuth на странице <code>/accounts</code>. Для каждого подключённого профиля владелец настраивает гранулярные права: только чтение, публикация или создание черновика, а серверная проверка <code>confirm_action</code> гарантирует, что ни один пост не выйдет без одобрения.
+          </p>
+          <p>
+            <strong>Publish Agent</strong> сохраняет черновики (текст, хэштеги, медиа) в коллекцию <code>posts</code>, откуда они попадают на страницу <strong>Post</strong> и в <strong>Content Calendar</strong>. В продакшне крон-служба <code>POST_PUBLISH_CRON</code> на базе <strong>CloudHike Jobs</strong> автоматически отправляет пост в назначенный час (локально на <code>localhost</code> планировщик недоступен без <code>ngrok</code>, поэтому посты публикуются сразу или остаются черновиками).
+          </p>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE LAB 4: IMAGEKIT + COMPOSIO / CALENDAR -->
+      <div class="split-equal" style="margin-top: var(--space-lg);">
+        <!-- Left: ImageKit URL Builder -->
+        <div class="figure-card">
+          <span class="index-num">ИНТЕРАКТИВ 04A</span>
+          <h3 class="subsection-title" style="margin-top: var(--space-xs);">Конструктор AI-трансформаций ImageKit</h3>
+
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); margin-bottom: var(--space-md);">
+            <div class="control-group">
+              <label class="control-label" for="ik-ratio">Формат площадки</label>
+              <select id="ik-ratio" class="control-select" onchange="updateImageKitPreview()">
+                <option value="1:1">1:1 (Instagram Feed • 1080×1080)</option>
+                <option value="9:16">9:16 (Reels / Shorts • 1080×1920)</option>
+                <option value="16:9">16:9 (YouTube Cover • 1280×720)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="ik-op">ИИ-операция</label>
+              <select id="ik-op" class="control-select" onchange="updateImageKitPreview()">
+                <option value="none">Smart Crop (fo-auto)</option>
+                <option value="bgremove">Удаление фона (e-bgremove)</option>
+                <option value="upscale">Апскейл 2× (e-upscale)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="ik-preview-stage">
+            <div class="ik-frame ratio-1-1" id="ik-frame">
+              <span style="font-family: var(--font-label); font-size: 0.72rem; opacity: 0.9;" id="ik-frame-dim">1080 × 1080</span>
+              <strong style="font-size: 0.9rem; line-height: 1.25;">«ИИ-гаджеты до $50»</strong>
+              <span style="font-family: var(--font-label); font-size: 0.7rem;" id="ik-frame-op">fo-auto • q-80</span>
+            </div>
+          </div>
+
+          <div style="margin-top: var(--space-md);">
+            <span class="kpi-label" style="margin-bottom: var(--space-xs);">ИТОГОВЫЙ CDN-URL (IMAGEKIT)</span>
+            <pre class="code-block"><code id="ik-url-out"></code></pre>
+          </div>
+        </div>
+
+        <!-- Right: Composio & Content Calendar -->
+        <div class="figure-card">
+          <span class="index-num">ИНТЕРАКТИВ 04B</span>
+          <h3 class="subsection-title" style="margin-top: var(--space-xs);">Права Composio и Календарь публикаций</h3>
+
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); margin-bottom: var(--space-md);">
+            <div class="control-group">
+              <label class="control-label" for="comp-perm">Права Publish Agent (Instagram)</label>
+              <select id="comp-perm" class="control-select" onchange="updateCalendarState()">
+                <option value="approval">Черновик + confirm_action (по умолчанию)</option>
+                <option value="readonly">Только чтение (read-only)</option>
+                <option value="auto">Автопубликация без подтверждения</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="cron-env">Среда CloudHike Jobs</label>
+              <select id="cron-env" class="control-select" onchange="updateCalendarState()">
+                <option value="prod">Production (Vercel + POST_PUBLISH_CRON)</option>
+                <option value="local">Localhost (без ngrok — публикация сразу)</option>
+              </select>
+            </div>
+          </div>
+
+          <span class="kpi-label" style="margin-bottom: var(--space-xs);">КЛИКНИТЕ НА ДЕНЬ МЕСЯЦА, ЧТОБЫ ЗАПЛАНИРОВАТЬ ЧЕРНОВИК</span>
+          <div class="cal-grid" id="cal-grid"></div>
+
+          <div id="cal-status-msg" class="inline-notice" style="margin-top: var(--space-md);">
+            Черновик «ИИ-гаджеты до $50» запланирован на 18 число.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 05: OPENAI AGENTS SDK, TESTING & COST OPTIMIZATION -->
+    <section id="sec-sdk">
+      <div class="dossier-bar">
+        <span class="dossier-pill">РАЗДЕЛ 05</span>
+        <span class="dossier-meta">OPENAI AGENTS SDK • ТЕСТИРОВАНИЕ • ЭКОНОМИКА МОДЕЛЕЙ (GPT-4O-MINI / DEEPSEEK-V3)</span>
+      </div>
+      <h2 class="section-title">Цикл Think → Act → Observe, мок-тестирование в CI/CD и снижение затрат на LLM до нуля</h2>
+
+      <div class="prose-col" style="margin-top: var(--space-md);">
+        <p>
+          Каждый агент в Creator City описывается через <strong>OpenAI Agents SDK</strong> с жёсткими ограничениями ресурсов: <code>maxTurns</code> (например, повышение с 12 до 30 для сложных задач браузера), <code>reasoningEffort</code> и <code>timeoutSeconds</code> (до 600 с для монтажа). Чтобы не тратить токены и виртуальные машины в CI/CD, системные промпты проверяются на двух уровнях: <strong>Unit-тесты</strong> (валидация модели, лимитов и списка инструментов) и <strong>Integration-тесты</strong> на Vitest/Jest, где <code>cloudComputerTool</code> подменяется моком, а проверяется сама фаза рассуждений (<em>Think</em>) и корректность вызова инструментов.
+        </p>
+        <p>
+          <strong>Как сделать приложение максимально дешёвым без потери качества?</strong> Главный оркестратор (<strong>Headquarters</strong>) лучше оставлять на стабильной модели вроде <code>gpt-4o-mini</code> или <code>gpt-4.1</code> — ошибки планирования на верхнем уровне ломают весь пайплайн. А вот специализированных агентов-исполнителей (Research, Script Writer, Publish) можно переключить через OpenAI-совместимый <code>baseURL</code> на бюджетные модели вроде <strong>DeepSeek-V3</strong> (или GLM / MiniMax), либо подключить бесплатные дневные квоты OpenAI Data Sharing (до <strong>250 000 токенов/день</strong> на флагманы и <strong>2,5 млн токенов/день</strong> на mini-модели).
+        </p>
+      </div>
+
+      <!-- INTERACTIVE LAB 5: LLM COST & SDK SIMULATOR -->
+      <div class="figure-card" style="margin-top: var(--space-lg);">
+        <span class="index-num">ИНТЕРАКТИВ 05</span>
+        <h3 class="subsection-title" style="margin-top: var(--space-xs);">Калькулятор экономики LLM и конструктор конфигурации SDK</h3>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg);">
+          <div class="control-group">
+            <label class="control-label" for="sdk-runs">Запусков конвейера в день: <strong id="sdk-runs-val">5</strong></label>
+            <input type="range" id="sdk-runs" min="1" max="30" value="5" oninput="syncSdkRuns(this.value)" style="min-height: 44px; accent-color: var(--secondary);">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="sdk-hq-model">Модель Штаб-квартиры (HQ)</label>
+            <select id="sdk-hq-model" class="control-select" onchange="updateSdkEconomics()">
+              <option value="gpt-4o-mini">gpt-4o-mini (оптимальный баланс)</option>
+              <option value="gpt-4.1">gpt-4.1 (сложное планирование)</option>
+              <option value="gpt-4o">gpt-4o (максимальная цена)</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="sdk-worker-model">Модель агентов-исполнителей</label>
+            <select id="sdk-worker-model" class="control-select" onchange="updateSdkEconomics()">
+              <option value="deepseek-v3">DeepSeek-V3 (OpenAI-совместимый API)</option>
+              <option value="free-tier">OpenAI Free Data Sharing (до 2.5M ток/день)</option>
+              <option value="gpt-4o-mini">gpt-4o-mini</option>
+              <option value="gpt-4o">gpt-4o</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="sdk-turns">Лимит шагов (maxTurns)</label>
+            <select id="sdk-turns" class="control-select" onchange="updateSdkEconomics()">
+              <option value="30">30 шагов (для Cloud PC и Clip Genie)</option>
+              <option value="12">12 шагов (базовый для простых задач)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="split-equal" style="margin-top: 0;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-sm);">
+              <span class="kpi-label">ОЦЕНКА РАСХОДОВ ЗА 30 ДНЕЙ (USD)</span>
+              <strong id="sdk-monthly-cost" style="font-family: var(--font-headline); font-size: 1.5rem; color: var(--secondary);">$0.00 / мес</strong>
+            </div>
+            <div class="chart-box">
+              <canvas id="llmCostChart"></canvas>
+            </div>
+          </div>
+
+          <div>
+            <span class="kpi-label" style="margin-bottom: var(--space-xs);">ГЕНЕРИРУЕМАЯ КОНФИГУРАЦИЯ (AGENTS SDK + TESTING)</span>
+            <pre class="code-block"><code id="sdk-code-out"></code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 06: LOCAL SETUP, ENV & VERCEL DEPLOY -->
+    <section id="sec-deploy">
+      <div class="dossier-bar">
+        <span class="dossier-pill">РАЗДЕЛ 06</span>
+        <span class="dossier-meta">ЛОКАЛЬНЫЙ ЗАПУСК • ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ • ПРОДАКШН НА VERCEL И CLOUDHIKE</span>
+      </div>
+      <h2 class="section-title">Пошаговое развёртывание: от клонирования репозитория до продакшна на Vercel и Strapi Cloud</h2>
+
+      <div class="prose-col" style="margin-top: var(--space-md);">
+        <p>
+          Проект состоит из двух независимых частей: фронтенда и оркестратора на <strong>Next.js</strong> (репозиторий <code>rrs301/ai-agent-city-for-content-creator</code>, включает Tailwind CSS, Drizzle ORM и компоненты города) и бэкенда на <strong>Strapi CMS 5</strong> (<code>ai-agent-city-for-content-creator-strapi-admin</code>), подключённого к базе PostgreSQL на CloudHike.dev.
+        </p>
+        <p>
+          Перед публикацией на <strong>Vercel</strong> необходимо перенести все ключи из <code>.env.local</code> в настройки проекта Vercel, развернуть сам Strapi на публичном HTTPS-домене (через <strong>CloudHike App Hosting</strong> или <strong>Strapi Cloud</strong>), обновить разрешённые URL обратного вызова (callback URL) в Google OAuth и CloudHike Auth с <code>localhost:3000</code> на боевой домен, а также указать публичный адрес вебхука Strapi и активировать <code>POST_PUBLISH_CRON</code>.
+        </p>
+      </div>
+
+      <!-- INTERACTIVE LAB 6: ENV INSPECTOR & PERSISTENT DEPLOY CHECKLIST -->
+      <div class="split-equal" style="margin-top: var(--space-lg);">
+        <!-- Left: .env.local Explorer -->
+        <div class="figure-card">
+          <span class="index-num">ИНТЕРАКТИВ 06A</span>
+          <h3 class="subsection-title" style="margin-top: var(--space-xs);">Инспектор переменных окружения (.env.local)</h3>
+
+          <div class="btn-row" style="margin-bottom: var(--space-md);">
+            <button type="button" class="btn btn-secondary btn-active" onclick="filterEnvGroup('all')" id="env-tab-all">Все</button>
+            <button type="button" class="btn btn-secondary" onclick="filterEnvGroup('ai')" id="env-tab-ai">LLM и MCP</button>
+            <button type="button" class="btn btn-secondary" onclick="filterEnvGroup('cloudhike')" id="env-tab-cloudhike">CloudHike</button>
+            <button type="button" class="btn btn-secondary" onclick="filterEnvGroup('media')" id="env-tab-media">Media и Pusher</button>
+          </div>
+
+          <pre class="code-block" style="max-height: 360px;"><code id="env-code-out"></code></pre>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-md); gap: var(--space-sm);">
+            <span id="env-copy-status" class="kpi-label">Готово к переносу в Vercel / .env.local</span>
+            <button type="button" class="btn btn-primary" onclick="copyEnvSnippet()">Копировать блок</button>
+          </div>
+        </div>
+
+        <!-- Right: Persistent Launch Checklist -->
+        <div class="figure-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+            <div>
+              <span class="index-num">ИНТЕРАКТИВ 06B</span>
+              <h3 class="subsection-title" style="margin-top: var(--space-xs); margin-bottom: 0;">Чеклист запуска и деплоя</h3>
+            </div>
+            <button type="button" class="btn btn-secondary" id="btn-reset-checklist" onclick="handleResetChecklist(this)" style="min-height: 36px; padding: 4px 10px; font-size: 0.78rem;">Сбросить</button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+            <div class="progress-track">
+              <div class="progress-fill" id="checklist-progress-fill"></div>
+            </div>
+            <span class="kpi-label" id="checklist-progress-label">0 / 8</span>
+          </div>
+
+          <div id="deploy-checklist" style="display: flex; flex-direction: column; gap: var(--space-sm);"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER & SOURCES -->
+    <footer class="aside-box" style="margin-top: var(--space-md);">
+      <div class="dossier-bar" style="margin-bottom: var(--space-sm);">
+        <span class="dossier-pill">ИСТОЧНИКИ И МАТЕРИАЛЫ</span>
+        <span class="dossier-meta">СВОДНАЯ БИБЛИОГРАФИЯ ПРОЕКТА CREATOR CITY</span>
+      </div>
+      <p style="margin: 0; font-size: 0.88rem; color: var(--on-surface-variant); line-height: 1.55;">
+        Эксплайнер подготовлен на основе документации платформы «Creator City — Your AI content team, as a city» (ai-agent-city-for-content-creator.vercel.app), исходных репозиториев <code>rrs301/ai-agent-city</code>, <code>rrs301/ai-agent-city-for-content-creator</code> и <code>rrs301/ai-agent-city-for-content-creator-strapi-admin</code>, видеокурса TubeGuruji «Full Stack AI Agent City for Content Creators using NextJs, Claude Code» и внутренней технической документации архитектуры Creator City.
+      </p>
+    </footer>
+
+  </main>
+
+  <api-shim></api-shim>
+  <script>
+    // =========================================================================
+    // STATE & PERSISTENCE
+    // =========================================================================
+    let appState = {
+      hqStyle: 'Empire',
+      isNight: false,
+      scenarioKey: 'gadgets',
+      completedChecklist: [],
+      selectedCol: 'memories',
+      ikRatio: '1:1',
+      ikOp: 'none',
+      scheduledDay: 18,
+      sdkRuns: 5
+    };
+
+    function getCssToken(name) {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(name);
+      return val ? val.trim() : '';
+    }
+
+    async function savePersistedState() {
+      if (window.notebookAppApi && typeof window.notebookAppApi.setAppState === 'function') {
+        try {
+          await window.notebookAppApi.setAppState(appState);
+        } catch (e) {
+          // Safe fallback in standalone view
+        }
+      }
+    }
+
+    // =========================================================================
+    // SECTION 01: CITY & HQ PIPELINE SIMULATOR
+    // =========================================================================
+    const AGENT_CATALOG = {
+      hq: {
+        badge: `ОРКЕСТРАТОР`,
+        title: `Headquarters (Штаб-квартира)`,
+        desc: `Центральный мозг города. Разбивает единый промпт на шаги, назначает агентов, управляет очередью запросов (Queue) и эскалацией ошибок.`,
+        tools: [`OpenAI Agents SDK`, `Queue Manager`, `Strapi MCP`]
+      },
+      research: {
+        badge: `ШАГ 1 • ИССЛЕДОВАНИЕ`,
+        title: `Research Agent`,
+        desc: `Запускает облачный браузер Chrome, анализирует Google Trends и Hacker News, формирует бриф и сохраняет его в Strapi Memories.`,
+        tools: [`Cloud Computer`, `Strapi MCP (create)`, `Artifacts (save)`]
+      },
+      script: {
+        badge: `ШАГ 2 • СЦЕНАРИЙ`,
+        title: `Script Writer`,
+        desc: `Читает ID исследовательского брифа из общей памяти, пишет сценарий с хуком, структурой по сценам и CTA, сохраняя в Artifacts.`,
+        tools: [`Strapi MCP (find)`, `Artifacts (save)`]
+      },
+      voice: {
+        badge: `ШАГ 3 • ОЗВУЧКА`,
+        title: `Voice Agent`,
+        desc: `Генерирует закадровую озвучку (Deepgram Nova / ElevenLabs) по готовому сценарию и сохраняет аудиодорожку (.mp3) в Strapi.`,
+        tools: [`Cloud Computer`, `Deepgram / ElevenLabs`, `Artifacts (save)`]
+      },
+      media: {
+        badge: `ШАГ 4 • ВИЗУАЛЫ`,
+        title: `Media Agent`,
+        desc: `Генерирует и адаптирует баннеры/обложки через ImageKit AI (generate_image, transform_image) или скачивает B-roll в браузере.`,
+        tools: [`ImageKit AI`, `Cloud Computer`, `Strapi Media Library`]
+      },
+      editor: {
+        badge: `ШАГ 5 • МОНТАЖ`,
+        title: `Video Editor`,
+        desc: `Загружает клипы в clipgenie.app через Cloud Computer, ставит стиль субтитров Viral Pop, добавляет B-roll, зумы и экспортирует .mp4.`,
+        tools: [`Cloud Computer`, `Clip Genie`, `Artifacts (list/save)`]
+      },
+      publish: {
+        badge: `ШАГ 6 • ПУБЛИКАЦИЯ`,
+        title: `Publish Agent`,
+        desc: `Собирает метаданные, создаёт черновик в коллекции posts, запрашивает подтверждение confirm_action и публикует через Composio.`,
+        tools: [`Composio OAuth`, `confirm_action`, `Content Calendar`]
+      }
+    };
+
+    const CITY_SCENARIOS = {
+      gadgets: {
+        title: `«Сделай 60-сек видео о бюджетных ИИ-гаджетах до $50»`,
+        steps: [
+          { agent: `hq`, pct: 10, label: `HQ • Planning`, log: `Штаб-квартира декомпозировала запрос на 6 шагов и очистила историю чатов для нового контекста.` },
+          { agent: `research`, pct: 26, label: `Research • Working`, doneLabel: `Research • Done`, log: `Research Agent нашёл 12 растущих тем и 8 источников. Бриф записан в Strapi Memories (ID: mem_841).` },
+          { agent: `script`, pct: 44, label: `Script • Working`, doneLabel: `Script • Done`, log: `Script Writer считал mem_841 и сгенерировал 60-сек сценарий (хук + 4 сцены + CTA) в Artifacts.` },
+          { agent: `voice`, pct: 60, label: `Voice • ON AIR`, doneLabel: `Voice • Done`, log: `Voice Agent озвучил текст в Deepgram (голос Nova) и сохранил дорожку gadgets_vo.mp3.` },
+          { agent: `media`, pct: 76, label: `Media • Generating`, doneLabel: `Media • Done`, log: `Media Agent сгенерировал 4 карточки товаров через ImageKit (9:16) и сохранил в /creator city.` },
+          { agent: `editor`, pct: 90, label: `Editor • Rendering`, doneLabel: `Editor • Done`, log: `Video Editor собрал ролик с субтитрами и сохранил финал gadgets_final.mp4 в Artifacts.` },
+          { agent: `publish`, pct: 100, label: `Publish • Drafted`, doneLabel: `Publish • Ready`, log: `Publish Agent подготовил заголовок, теги и черновик в коллекции posts; ожидает подтверждения человека.` }
+        ]
+      },
+      trends: {
+        title: `«Найди тренд в Google Trends, преврати в 45-сек Instagram Reel»`,
+        steps: [
+          { agent: `hq`, pct: 15, label: `HQ • Planning`, log: `HQ назначил Research, Script Writer, Voice, Media и Publish агентов.` },
+          { agent: `research`, pct: 35, label: `Cloud PC • Scraping`, doneLabel: `Research • Done`, log: `Research Agent открыл Google Trends в облачном Chrome (1.8 с) и сохранил топ-5 запросов в mem_902.` },
+          { agent: `script`, pct: 55, label: `Script • Writing`, doneLabel: `Script • Done`, log: `Script Writer создал динамичный 45-сек сценарий для Reels и передал ID артефакта.` },
+          { agent: `voice`, pct: 78, label: `Voice • Needs you!`, doneLabel: `Voice • Done`, needsYou: true, log: `ВНИМАНИЕ: Voice Agent запросил авторизацию в ElevenLabs (status: needs_you). После входа через Live Control озвучка завершена!` },
+          { agent: `publish`, pct: 100, label: `Publish • Scheduled`, doneLabel: `Publish • Ready`, log: `Черновик Reel перенесён в Календарь на утренний слот (09:00) через CloudHike Jobs.` }
+        ]
+      },
+      clipgenie: {
+        title: `«Смонтируй загруженный клип через Clip Genie и запланируй»`,
+        steps: [
+          { agent: `hq`, pct: 20, label: `HQ • 2-Step Plan`, log: `Пользователь прикрепил сырое видео (talking-head.mp4) в Artifacts. HQ построил план из 2 этапов.` },
+          { agent: `editor`, pct: 70, label: `Clip Genie • Editing`, doneLabel: `Editor • Exported`, log: `Video Editor запустил Cloud PC, загрузил клип на clipgenie.app, выбрал шаблон Viral Pop, добавил зумы и скачал .mp4.` },
+          { agent: `publish`, pct: 100, label: `Publish • Scheduled`, doneLabel: `Publish • Ready`, log: `Publish Agent добавил описание с хэштегами и поставил ролик в календарь через Composio.` }
+        ]
+      },
+      insta: {
+        title: `«Создай квадратный баннер 1:1 Happy New Year и сохрани черновик»`,
+        steps: [
+          { agent: `hq`, pct: 25, label: `HQ • Routing`, log: `HQ определил краткий маршрут: Media Agent → Publish Agent.` },
+          { agent: `media`, pct: 65, label: `ImageKit • 1:1`, doneLabel: `Media • Created`, log: `Media Agent сгенерировал баннер 1080×1080 через ImageKit URL API и сохранил в Strapi Media Library.` },
+          { agent: `publish`, pct: 100, label: `Publish • Drafted`, doneLabel: `Publish • Ready`, log: `Publish Agent проверил OAuth-подключение Instagram в Composio и создал черновик в разделе Post.` }
+        ]
+      }
+    };
+
+    let currentStepIdx = -1;
+    let autoPlayTimer = null;
+    let queueCounter = 0;
+
+    function setHqStyle(style) {
+      appState.hqStyle = style;
+      ['Empire', 'Crown', 'Twin'].forEach(function(s) {
+        const shape = document.getElementById('hq-shape-' + s.toLowerCase());
+        const btn = document.getElementById('hq-btn-' + s);
+        if (shape) shape.style.display = (s === style) ? 'block' : 'none';
+        if (btn) btn.classList.toggle('btn-active', s === style);
+      });
+      const mapName = document.getElementById('hq-map-name');
+      if (mapName) mapName.textContent = `HQ (` + style + `)`;
+      savePersistedState();
+    }
+
+    function toggleCityTheme() {
+      appState.isNight = !appState.isNight;
+      const stage = document.getElementById('city-stage');
+      const btn = document.getElementById('btn-day-night');
+      if (stage) stage.classList.toggle('is-night', appState.isNight);
+      if (btn) btn.textContent = appState.isNight ? `Режим: Ночь` : `Режим: День`;
+      savePersistedState();
+    }
+
+    function selectCityScenario(val) {
+      appState.scenarioKey = val;
+      resetCityPipeline();
+    }
+
+    function selectAgentCard(key) {
+      const info = AGENT_CATALOG[key];
+      if (!info) return;
+      document.querySelectorAll('.svg-bldg').forEach(function(el) {
+        el.classList.remove('is-selected');
+      });
+      const target = document.getElementById('bldg-' + key);
+      if (target) target.classList.add('is-selected');
+
+      const badgeEl = document.getElementById('insp-badge');
+      const titleEl = document.getElementById('insp-title');
+      const descEl = document.getElementById('insp-desc');
+      const toolsEl = document.getElementById('insp-tools');
+      if (badgeEl) badgeEl.textContent = info.badge;
+      if (titleEl) titleEl.textContent = info.title;
+      if (descEl) descEl.textContent = info.desc;
+      if (toolsEl) {
+        toolsEl.innerHTML = info.tools.map(function(t) {
+          return `<span class="tag tag-neutral">` + t + `</span>`;
+        }).join('');
+      }
+    }
+
+    function resetCityPipeline() {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+        const ab = document.getElementById('btn-autoplay');
+        if (ab) ab.textContent = `Авто-запуск`;
+      }
+      currentStepIdx = -1;
+      const defaults = {
+        hq: `HQ • Ready`,
+        research: `Step 1 • Idle`,
+        script: `Step 2 • Idle`,
+        voice: `Step 3 • Idle`,
+        media: `Step 4 • Idle`,
+        editor: `Step 5 • Idle`,
+        publish: `Step 6 • Idle`
+      };
+      Object.keys(defaults).forEach(function(k) {
+        const b = document.getElementById('bldg-' + k);
+        const s = document.getElementById('status-' + k);
+        if (b) b.classList.remove('is-working', 'is-done', 'is-needs-you');
+        if (s) s.textContent = defaults[k];
+      });
+      const fill = document.getElementById('hud-progress-fill');
+      const pct = document.getElementById('hud-progress-pct');
+      const title = document.getElementById('hud-step-title');
+      const logEl = document.getElementById('insp-log');
+      if (fill) fill.style.width = `0%`;
+      if (pct) pct.textContent = `0%`;
+      const sc = CITY_SCENARIOS[appState.scenarioKey] || CITY_SCENARIOS.gadgets;
+      if (title) title.textContent = `Готово к запуску: ` + sc.title;
+      if (logEl) logEl.textContent = `Пайплайн сброшен. Все статусы очищены в состояние Idle (без залипания прошлых задач).`;
+      selectAgentCard('hq');
+    }
+
+    function runCityPipelineStep() {
+      const sc = CITY_SCENARIOS[appState.scenarioKey] || CITY_SCENARIOS.gadgets;
+      if (currentStepIdx >= sc.steps.length - 1) {
+        resetCityPipeline();
+        return;
+      }
+      if (currentStepIdx >= 0) {
+        const prev = sc.steps[currentStepIdx];
+        const prevB = document.getElementById('bldg-' + prev.agent);
+        const prevS = document.getElementById('status-' + prev.agent);
+        if (prevB) {
+          prevB.classList.remove('is-working', 'is-needs-you');
+          prevB.classList.add('is-done');
+        }
+        if (prevS && prev.doneLabel) prevS.textContent = prev.doneLabel;
+      }
+
+      currentStepIdx++;
+      const step = sc.steps[currentStepIdx];
+      const curB = document.getElementById('bldg-' + step.agent);
+      const curS = document.getElementById('status-' + step.agent);
+      if (curB) {
+        curB.classList.remove('is-done');
+        curB.classList.add(step.needsYou ? 'is-needs-you' : 'is-working');
+      }
+      if (curS) curS.textContent = step.label;
+
+      const fill = document.getElementById('hud-progress-fill');
+      const pct = document.getElementById('hud-progress-pct');
+      const title = document.getElementById('hud-step-title');
+      const logEl = document.getElementById('insp-log');
+      if (fill) fill.style.width = step.pct + `%`;
+      if (pct) pct.textContent = step.pct + `%`;
+      if (title) title.textContent = sc.title + ` → ` + step.label;
+      selectAgentCard(step.agent);
+      if (logEl) logEl.textContent = step.log;
+
+      if (currentStepIdx === sc.steps.length - 1 && queueCounter > 0) {
+        queueCounter--;
+        updateQueueNotice();
+      }
+    }
+
+    function toggleAutoPlayPipeline() {
+      const btn = document.getElementById('btn-autoplay');
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+        if (btn) btn.textContent = `Авто-запуск`;
+        return;
+      }
+      if (btn) btn.textContent = `Пауза`;
+      runCityPipelineStep();
+      autoPlayTimer = setInterval(function() {
+        const sc = CITY_SCENARIOS[appState.scenarioKey] || CITY_SCENARIOS.gadgets;
+        if (currentStepIdx >= sc.steps.length - 1) {
+          clearInterval(autoPlayTimer);
+          autoPlayTimer = null;
+          if (btn) btn.textContent = `Авто-запуск`;
+        } else {
+          runCityPipelineStep();
+        }
+      }, 1500);
+    }
+
+    function enqueueExtraTask() {
+      queueCounter++;
+      updateQueueNotice();
+    }
+
+    function updateQueueNotice() {
+      const el = document.getElementById('queue-notice');
+      if (!el) return;
+      if (queueCounter <= 0) {
+        el.style.display = 'none';
+        return;
+      }
+      el.style.display = 'block';
+      el.textContent = `Очередь HQ (Queue): в ожидании задач — ` + queueCounter + `. Штаб-квартира не отклоняет новые промпты во время работы и запускает их строго последовательно.`;
+    }
+
+    // =========================================================================
+    // SECTION 02: STRAPI 10 COLLECTIONS & MCP CONFIG
+    // =========================================================================
+    const STRAPI_COLLECTIONS = [
+      {
+        id: `memories`,
+        endpoint: `GET / POST /api/memories`,
+        role: `Общая память Strapi MCP`,
+        desc: `Ключевая коллекция для передачи контекста между агентами. Вместо длинных промптов Research Agent сохраняет сюда бриф, а Script Writer считывает его по ID через strapiMcpMemory.find.`,
+        fields: [
+          [`title`, `String`, `Заголовок найденного тренда или задачи`],
+          [`type`, `Enum`, `Категория (research_brief, context, brand_voice)`],
+          [`content`, `JSON / Text`, `Структурированная выжимка фактов и источников`],
+          [`tags`, `JSON`, `Ключевые теги для быстрого поиска агентами`],
+          [`taskId / agentId`, `String / Relation`, `Привязка к задаче и агенту-автору`]
+        ],
+        json: `{\n  "data": {\n    "id": "mem_841",\n    "type": "research_brief",\n    "title": "AI gadgets under $50 (Google Trends)",\n    "tags": ["ai", "gadgets", "shorts"],\n    "agentId": "agent_research_01"\n  }\n}`
+      },
+      {
+        id: `artifacts`,
+        endpoint: `GET / POST /api/artifacts`,
+        role: `Файлы и результаты`,
+        desc: `Единое хранилище всех результатов работы агентов и загруженных пользователем файлов (текст, аудио, видео, изображения) для страницы Artifacts.`,
+        fields: [
+          [`title`, `String`, `Название артефакта`],
+          [`type`, `Enum`, `document | image | audio | video`],
+          [`agentId / projectId`, `String`, `Идентификаторы автора и проекта`],
+          [`operation`, `String`, `generate, edit, bg_remove, upscale, export`],
+          [`media`, `Relation (Media)`, `Ссылка на файл в Strapi / ImageKit CDN`],
+          [`metadata`, `JSON`, `Ширина, высота, размер файла, использованная модель`]
+        ],
+        json: `{\n  "data": {\n    "id": "art_509",\n    "type": "video",\n    "title": "gadgets_final.mp4",\n    "operation": "clipgenie_export",\n    "metadata": { "duration": 58, "captionStyle": "Viral Pop" }\n  }\n}`
+      },
+      {
+        id: `headquarters`,
+        endpoint: `GET / PUT /api/headquarters`,
+        role: `Конфигурация Штаба`,
+        desc: `Хранит настройки постоянной Штаб-квартиры пользователя, создаваемой на шаге /headquarters/new и редактируемой в Settings.`,
+        fields: [
+          [`name`, `String`, `Название города / штаб-квартиры`],
+          [`owner`, `Relation (User)`, `Владелец штаб-квартиры`],
+          [`style`, `Enum`, `Empire | Crown | Twin`],
+          [`color / glassTint`, `String`, `Цветовая палитра фасада и остекления`],
+          [`height / spire / landscaping`, `Number / Bool / Enum`, `Высота башни, наличие шпиля и тип озеленения`]
+        ],
+        json: `{\n  "data": {\n    "name": "Creator Studio HQ",\n    "style": "Empire",\n    "glassTint": "#38bdf8",\n    "spire": true\n  }\n}`
+      },
+      {
+        id: `agents`,
+        endpoint: `GET / POST / PUT /api/agents`,
+        role: `Реестр ИИ-агентов`,
+        desc: `Описывает как визуальный облик здания на карте города, так и серверную конфигурацию ИИ-модели и подключённых инструментов.`,
+        fields: [
+          [`name / instructions`, `String / Text`, `Имя роли и системный промпт агента`],
+          [`buildingStyle / color / icon`, `String`, `Архитектура, цвет и иконка здания`],
+          [`floorSize / interior / roof`, `JSON`, `Размер этажа, интерьер, спутник/солнечные панели`],
+          [`model / tools`, `String / JSON`, `Модель (gpt-4.1, deepseek-v3) и MCP-инструменты`],
+          [`headquarter`, `Relation`, `Связь с центральной штаб-квартирой`]
+        ],
+        json: `{\n  "data": {\n    "name": "Video Editor",\n    "model": "gpt-4.1",\n    "tools": ["cloudComputerTool", "strapiMcpMemory", "artifactTools"],\n    "maxTurns": 30\n  }\n}`
+      },
+      {
+        id: `computer_sessions`,
+        endpoint: `GET / PUT /api/computer-sessions`,
+        role: `Сессии Cloud Computer`,
+        desc: `Отслеживает жизненный цикл удалённых Ubuntu-машин CloudHike и управляет переключением в интерактивный режим Live Control.`,
+        fields: [
+          [`sessionId`, `String`, `Уникальный ID инстанса CloudHike`],
+          [`status`, `Enum`, `starting | running | needs_you | completed | stopped`],
+          [`liveUrl`, `String`, `URL защищённой VNC / WebRTC-трансляции экрана`],
+          [`isInteractive`, `Boolean`, `Флаг ручного перехвата управления курсором`],
+          [`needsYouReason`, `String`, `Причина паузы (ввод 2FA, капча, логин)`]
+        ],
+        json: `{\n  "event": "entry.update",\n  "model": "computer-session",\n  "entry": {\n    "sessionId": "vm_7721",\n    "status": "needs_you",\n    "needsYouReason": "Требуется авторизация на clipgenie.app"\n  }\n}`
+      },
+      {
+        id: `agent_requests`,
+        endpoint: `GET / POST /api/agent-requests`,
+        role: `Запросы к человеку`,
+        desc: `Фиксирует диалоги подтверждения (confirm_action) и вопросы агента при неопределённости (ask_user), отображаемые пузырём над зданием.`,
+        fields: [
+          [`agent`, `Relation (Agent)`, `Агент, ожидающий ответа`],
+          [`question`, `Text`, `Текст вопроса или описание действия`],
+          [`options`, `JSON`, `Кнопки быстрого выбора (например, ElevenLabs vs Deepgram)`],
+          [`resolved`, `Boolean`, `Статус обработки пользователем`]
+        ],
+        json: `{\n  "data": {\n    "question": "Какой сервис выбрать для озвучки?",\n    "options": ["Deepgram Nova", "ElevenLabs"],\n    "resolved": false\n  }\n}`
+      },
+      {
+        id: `media_assets`,
+        endpoint: `GET / POST /api/media-assets`,
+        role: `Метаданные ImageKit`,
+        desc: `Хранит историю генераций и URL-трансформаций изображений, выполненных Media Agent через сервис ImageKit.io.`,
+        fields: [
+          [`prompt`, `Text`, `Исходный промпт генерации`],
+          [`imagekitFileId`, `String`, `ID файла в облаке ImageKit`],
+          [`cdnUrl`, `String`, `Оптимизированная ссылка с трансформациями`],
+          [`aspectRatio`, `String`, `1:1, 9:16 или 16:9`]
+        ],
+        json: `{\n  "data": {\n    "aspectRatio": "1:1",\n    "cdnUrl": "ik.imagekit.io/creator_city/tr:w-1080,h-1080,fo-auto/banner.png"\n  }\n}`
+      },
+      {
+        id: `connected_accounts`,
+        endpoint: `GET / POST /api/connected-accounts`,
+        role: `Интеграции Composio`,
+        desc: `Содержит привязки внешних социальных сетей (Instagram, YouTube, X, LinkedIn, Notion) и матрицы прав доступа агентов.`,
+        fields: [
+          [`provider`, `String`, `Название платформы (instagram, youtube, x)`],
+          [`composioEntityId`, `String`, `Идентификатор подключения в Composio`],
+          [`allowedAgents`, `JSON`, `Список агентов с доступом`],
+          [`permissionMode`, `Enum`, `read_only | draft_confirm | auto_publish`]
+        ],
+        json: `{\n  "data": {\n    "provider": "instagram",\n    "permissionMode": "draft_confirm",\n    "allowedAgents": ["Publish Agent"]\n  }\n}`
+      },
+      {
+        id: `posts`,
+        endpoint: `GET / POST / PUT /api/posts`,
+        role: `Черновики и Календарь`,
+        desc: `Управляет публикациями, отображаемыми на страницах Post и Content Calendar; используется кроном POST_PUBLISH_CRON.`,
+        fields: [
+          [`caption / hashtags`, `Text`, `Текст публикации и подобранные хэштеги`],
+          [`platform`, `String`, `Целевая площадка`],
+          [`mediaArtifact`, `Relation (Artifact)`, `Прикреплённое видео или изображение`],
+          [`status`, `Enum`, `draft | scheduled | published | failed`],
+          [`scheduledAt`, `DateTime`, `Целевое время выхода в часовом поясе пользователя`]
+        ],
+        json: `{\n  "data": {\n    "platform": "instagram",\n    "status": "scheduled",\n    "scheduledAt": "2026-11-21T09:00:00Z"\n  }\n}`
+      },
+      {
+        id: `users`,
+        endpoint: `GET / POST /api/users`,
+        role: `Системные пользователи`,
+        desc: `Синхронизирует пользователей CloudHike Auth в Strapi 5. При регистрации API требует обязательной передачи поля role.`,
+        fields: [
+          [`username / email`, `String`, `Учётные данные из CloudHike Auth`],
+          [`role`, `Relation`, `Обязательная привязка к роли в Strapi 5`],
+          [`password`, `String`, `Случайный пароль (проверка входа идёт через CloudHike)`]
+        ],
+        json: `{\n  "data": {\n    "email": "creator@example.com",\n    "role": 1\n  }\n}`
+      }
+    ];
+
+    const MCP_SNIPPETS = {
+      claude: `# Регистрация Strapi MCP сервера в терминале Next.js для Claude Code CLI\nclaude mcp add --transport http strapi-mcp localhost:1337/mcp \\\n  --header "Authorization: Bearer <ВАШ_STRAPI_ADMIN_TOKEN>"\n\n# Проверка статуса: Added HTTP MCP server for the Strapi MCP`,
+      antigravity: `# Файл конфигурации MCP для Antigravity IDE (antigravity_mcp.toml)\n[[mcp.servers]]\nname = "strapi-mcp"\ncommand = "node"\nargs = ["/path/to/strapi-mcp-server/build/index.js"]\n\n[mcp.servers.env]\nSTRAPI_URL = "localhost:1337"\nSTRAPI_API_TOKEN = "<ВАШ_STRAPI_ADMIN_TOKEN>"\nALLOWED_COLLECTIONS = "headquarters,agents,memories,artifacts"`,
+      server: `// Бэкенд Strapi CMS: config/server.js\nmodule.exports = ({ env }) => ({\n  host: env('HOST', '0.0.0.0'),\n  port: env.int('PORT', 1337),\n  mcp: {\n    enabled: true, // Включает встроенный протокол Strapi MCP\n  },\n});`
+    };
+
+    function renderStrapiCollections() {
+      const listEl = document.getElementById('strapi-collection-list');
+      if (!listEl) return;
+      listEl.innerHTML = STRAPI_COLLECTIONS.map(function(c) {
+        const active = (c.id === appState.selectedCol) ? ' is-active' : '';
+        return `<button type="button" class="collection-btn` + active + `" onclick="selectStrapiCollection('` + c.id + `')">` +
+          `<span class="col-name">` + c.id + `</span>` +
+          `<span class="col-count">` + c.fields.length + ` пол.</span>` +
+          `</button>`;
+      }).join('');
+    }
+
+    function selectStrapiCollection(id) {
+      appState.selectedCol = id;
+      renderStrapiCollections();
+      const col = STRAPI_COLLECTIONS.find(function(c) { return c.id === id; }) || STRAPI_COLLECTIONS[0];
+      const title = document.getElementById('col-detail-title');
+      const ep = document.getElementById('col-detail-endpoint');
+      const role = document.getElementById('col-detail-role');
+      const desc = document.getElementById('col-detail-desc');
+      const fields = document.getElementById('col-detail-fields');
+      const json = document.getElementById('col-detail-json');
+
+      if (title) title.textContent = col.id;
+      if (ep) ep.textContent = `REST API: ` + col.endpoint;
+      if (role) role.textContent = col.role;
+      if (desc) desc.textContent = col.desc;
+      if (fields) {
+        fields.innerHTML = col.fields.map(function(f) {
+          return `<tr><td><code>` + f[0] + `</code></td><td>` + f[1] + `</td><td>` + f[2] + `</td></tr>`;
+        }).join('');
+      }
+      if (json) json.textContent = col.json;
+      savePersistedState();
+    }
+
+    function switchMcpTab(tab) {
+      ['claude', 'antigravity', 'server'].forEach(function(t) {
+        const btn = document.getElementById('mcp-tab-' + t);
+        if (btn) btn.classList.toggle('btn-active', t === tab);
+      });
+      const code = document.getElementById('mcp-code-preview');
+      if (code) code.textContent = MCP_SNIPPETS[tab] || MCP_SNIPPETS.claude;
+    }
+
+    // =========================================================================
+    // SECTION 03: LIVE CONTROL SIMULATOR
+    // =========================================================================
+    let vncInteractive = false;
+
+    const LIVE_CONTROL_STAGES = {
+      1: {
+        status: `running`,
+        interactive: false,
+        explain: `Этап 1: Агент Video Editor запустил Cloud Computer (Ubuntu Linux + Chrome) и открыл веб-редактор clipgenie.app. Курсор заблокирован для человека (pointer-events-none).`,
+        explainType: `default`,
+        code: `// Старт сессии в OpenAI Agents SDK\nconst session = await cloudComputerTool.start({\n  agent: 'Video Editor',\n  idleStopMinutes: 3\n});\n// status: 'running', isInteractive: false`,
+        vncHtml: `<div class="vnc-browser-card"><span class="tag tag-pine">CHROME • CLIPGENIE.APP</span><h4 style="margin: 8px 0 4px 0;">Автоматический монтаж в облаке</h4><p style="margin: 0; font-size: 0.85rem; color: var(--on-surface-variant);">Загрузка talking-head.mp4 (42 MB) завершена. ИИ выбирает стиль субтитров Viral Pop…</p></div>`
+      },
+      2: {
+        status: `needs_you`,
+        interactive: false,
+        explain: `Этап 2: Сайт потребовал вход в аккаунт и решение капчи! Агент приостанавливает цикл Think → Act → Observe и обновляет запись в коллекции computer_sessions Strapi на status: 'needs_you'.`,
+        explainType: `alert`,
+        code: `// Обновление коллекции computer_sessions в Strapi CMS\nawait strapi.update('computer-sessions', sessionId, {\n  status: 'needs_you',\n  needsYouReason: 'Требуется авторизация и ввод капчи на clipgenie.app'\n});`,
+        vncHtml: `<div class="vnc-browser-card"><span class="tag tag-error">ТРЕБУЕТСЯ ВХОД / КАПЧА</span><h4 style="margin: 8px 0 4px 0;">Подтвердите, что вы не робот</h4><p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--on-surface-variant);">Агент остановил курсор и ждёт вмешательства пользователя.</p><div style="padding: 8px; background: var(--surface-container); border-radius: 4px; font-family: var(--font-label); font-size: 0.78rem;">[ ] Я не робот (Ожидание клика человека)</div></div>`
+      },
+      3: {
+        status: `needs_you`,
+        interactive: false,
+        explain: `Этап 3: Strapi посылает Webhook на Next.js (/api/webhooks/strapi). Сервер проверяет секретный заголовок x-strapi-secret и отправляет push-сообщение через Pusher в приватный канал браузера.`,
+        explainType: `alert`,
+        code: `// app/api/webhooks/strapi/route.ts\nif (req.headers.get('x-strapi-secret') !== process.env.STRAPI_WEBHOOK_SECRET) {\n  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });\n}\nawait pusherServer.trigger('hq-' + hqId, 'agent-needs-you', {\n  sessionId, agentName: 'Video Editor', reason: needsYouReason\n});`,
+        vncHtml: `<div class="vnc-browser-card"><span class="tag tag-error">УВЕДОМЛЕНИЕ PUSHER</span><h4 style="margin: 8px 0 4px 0;">Video Editor требует участия!</h4><p style="margin: 0; font-size: 0.85rem; color: var(--on-surface-variant);">Здание Video Editor на карте пульсирует красным. Нажмите «Перехватить управление» (Этап 4).</p></div>`
+      },
+      4: {
+        status: `needs_you`,
+        interactive: true,
+        explain: `Этап 4: Хук useLiveControl вызывает POST /api/computer-sessions/{id}/interactive (isInteractive: true). Iframe VNC разблокирован — вы вводите пароль и проходите капчу. Куки сохраняются в cc_session.`,
+        explainType: `default`,
+        code: `// hooks/useLiveControl.ts\nconst res = await fetch('/api/computer-sessions/' + sessionId + '/interactive', {\n  method: 'POST',\n  body: JSON.stringify({ isInteractive: true })\n});\n// Iframe переключается в pointer-events-auto`,
+        vncHtml: `<div class="vnc-browser-card"><span class="tag tag-slate">ИНТЕРАКТИВНЫЙ РЕЖИМ АКТИВЕН</span><h4 style="margin: 8px 0 6px 0;">Ввод учётных данных (cc_session)</h4><p style="margin: 0 0 10px 0; font-size: 0.85rem; color: var(--on-surface-variant);">Нажмите кнопку ниже, чтобы симулировать прохождение капчи и сохранение сессии:</p><button type="button" class="btn btn-primary" style="min-height: 36px; padding: 4px 12px; font-size: 0.82rem;" onclick="setLiveControlStage(5)">Пройти капчу и вернуть управление</button></div>`
+      },
+      5: {
+        status: `running`,
+        interactive: false,
+        explain: `Этап 5: Нажата кнопка releaseControl() (isInteractive: false, status: 'running'). Агент продолжает монтаж в Clip Genie с сохранённой авторизацией, сохраняет .mp4 в Artifacts и через 3 минуты простоя выключает ВМ.`,
+        explainType: `ok`,
+        code: `// Возврат управления ИИ-агенту\nawait releaseControl(); // isInteractive = false, status = 'running'\n// Экспорт видео в Strapi Artifacts завершён.\n// Stop when idle (3 мин) -> Cloud PC остановлен.`,
+        vncHtml: `<div class="vnc-browser-card"><span class="tag tag-pine">УПРАВЛЕНИЕ ВОЗВРАЩЕНО АГЕНТУ</span><h4 style="margin: 8px 0 4px 0;">Экспорт завершён успешно</h4><p style="margin: 0; font-size: 0.85rem; color: var(--on-surface-variant);">Файл viral_pop_cut.mp4 сохранён в коллекции Artifacts и передан Publish Agent.</p></div>`
+      }
+    };
+
+    function setLiveControlStage(stageNum) {
+      const data = LIVE_CONTROL_STAGES[stageNum];
+      if (!data) return;
+      vncInteractive = data.interactive;
+
+      [1, 2, 3, 4, 5].forEach(function(n) {
+        const b = document.getElementById('lc-btn-' + n);
+        if (b) b.classList.toggle('btn-active', n === stageNum);
+        const node = document.getElementById('lc-node-' + n);
+        if (node) {
+          node.classList.remove('is-active', 'is-alert', 'is-ok');
+          if (n <= stageNum) {
+            if (stageNum === 2 || stageNum === 3) {
+              node.classList.add(n === stageNum ? 'is-alert' : 'is-active');
+            } else if (stageNum === 5) {
+              node.classList.add('is-ok');
+            } else {
+              node.classList.add(n === stageNum ? 'is-active' : 'is-ok');
+            }
+          }
+        }
+      });
+
+      [1, 2, 3, 4].forEach(function(e) {
+        const edge = document.getElementById('lc-edge-' + e);
+        if (edge) {
+          edge.classList.remove('is-active', 'is-alert');
+          if (e < stageNum) {
+            edge.classList.add((stageNum === 2 || stageNum === 3) ? 'is-alert' : 'is-active');
+          }
+        }
+      });
+
+      const pill = document.getElementById('vnc-status-pill');
+      const vncBody = document.getElementById('vnc-screen-body');
+      const vncBtn = document.getElementById('vnc-action-btn');
+      const explain = document.getElementById('lc-stage-explain');
+      const code = document.getElementById('lc-stage-code');
+
+      if (pill) {
+        pill.textContent = data.status + (data.interactive ? ` • interactive` : ``);
+        pill.className = `tag ` + (data.status === 'needs_you' ? 'tag-error' : 'tag-pine');
+      }
+      if (vncBody) vncBody.innerHTML = data.vncHtml;
+      if (vncBtn) {
+        vncBtn.textContent = data.interactive ? `Вернуть управление агенту` : `Перехватить управление`;
+      }
+      if (explain) {
+        explain.textContent = data.explain;
+        explain.className = `inline-notice` + (data.explainType === 'alert' ? ` is-alert` : (data.explainType === 'ok' ? ` is-ok` : ``));
+      }
+      if (code) code.textContent = data.code;
+    }
+
+    function toggleVncTakeover() {
+      setLiveControlStage(vncInteractive ? 5 : 4);
+    }
+
+    // =========================================================================
+    // SECTION 04: IMAGEKIT & CONTENT CALENDAR
+    // =========================================================================
+    function updateImageKitPreview() {
+      const ratioEl = document.getElementById('ik-ratio');
+      const opEl = document.getElementById('ik-op');
+      const frame = document.getElementById('ik-frame');
+      const dim = document.getElementById('ik-frame-dim');
+      const opLabel = document.getElementById('ik-frame-op');
+      const out = document.getElementById('ik-url-out');
+      if (!ratioEl || !opEl || !frame) return;
+
+      const ratio = ratioEl.value;
+      const op = opEl.value;
+      appState.ikRatio = ratio;
+      appState.ikOp = op;
+
+      frame.classList.remove('ratio-1-1', 'ratio-9-16', 'ratio-16-9', 'is-bg-removed');
+      let dims = { w: 1080, h: 1080, cls: 'ratio-1-1' };
+      if (ratio === '9:16') dims = { w: 1080, h: 1920, cls: 'ratio-9-16' };
+      if (ratio === '16:9') dims = { w: 1280, h: 720, cls: 'ratio-16-9' };
+
+      frame.classList.add(dims.cls);
+      if (op === 'bgremove') frame.classList.add('is-bg-removed');
+
+      let trParts = [`w-` + dims.w, `h-` + dims.h, `fo-auto`, `q-80`];
+      let opTxt = `fo-auto • q-80`;
+      if (op === 'bgremove') {
+        trParts.push(`e-bgremove`);
+        opTxt = `e-bgremove • fo-auto`;
+      } else if (op === 'upscale') {
+        trParts.push(`e-upscale`);
+        opTxt = `e-upscale • q-90`;
+      }
+
+      if (dim) dim.textContent = dims.w + ` × ` + dims.h;
+      if (opLabel) opLabel.textContent = opTxt;
+      if (out) {
+        out.textContent = `ik.imagekit.io/creator_city/tr:` + trParts.join(',') + `/ai_gadgets_cover.png`;
+      }
+      savePersistedState();
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('cal-grid');
+      if (!grid) return;
+      let html = '';
+      for (let d = 15; d <= 28; d++) {
+        const isSched = (d === appState.scheduledDay);
+        html += `<button type="button" class="cal-cell` + (isSched ? ` is-scheduled` : ``) + `" onclick="schedulePostDay(` + d + `)">` +
+          `<span class="cal-day-num">` + d + ` ноя</span>` +
+          (isSched ? `<span class="cal-slot-tag">IG 09:00</span>` : `<span class="cal-day-num">—</span>`) +
+          `</button>`;
+      }
+      grid.innerHTML = html;
+      updateCalendarState();
+    }
+
+    function schedulePostDay(day) {
+      appState.scheduledDay = day;
+      renderCalendar();
+      savePersistedState();
+    }
+
+    function updateCalendarState() {
+      const perm = document.getElementById('comp-perm');
+      const env = document.getElementById('cron-env');
+      const msg = document.getElementById('cal-status-msg');
+      if (!perm || !env || !msg) return;
+
+      const pVal = perm.value;
+      const eVal = env.value;
+      let text = ``;
+      let cls = `inline-notice`;
+
+      if (pVal === 'readonly') {
+        text = `Режим read-only: Publish Agent может читать статистику Instagram, но сервер заблокирует публикацию и оставит материал на ` + appState.scheduledDay + ` ноя в черновиках.`;
+        cls += ` is-alert`;
+      } else if (eVal === 'local') {
+        text = `Среда localhost: CloudHike Jobs не может достучаться до локального адреса без ngrok. Запланированный на ` + appState.scheduledDay + ` ноя пост опубликуется сразу (или останется черновиком).`;
+      } else if (pVal === 'approval') {
+        text = `Production + confirm_action: пост запланирован на ` + appState.scheduledDay + ` ноя (09:00). После вашего подтверждения крон POST_PUBLISH_CRON опубликует его через Composio.`;
+        cls += ` is-ok`;
+      } else {
+        text = `Production + Автопубликация: крон CloudHike Jobs автоматически опубликует пост ` + appState.scheduledDay + ` ноя без дополнительного диалога confirm_action.`;
+        cls += ` is-ok`;
+      }
+      msg.className = cls;
+      msg.textContent = text;
+    }
+
+    // =========================================================================
+    // SECTION 05: OPENAI AGENTS SDK & LLM ECONOMICS
+    // =========================================================================
+    let llmChart = null;
+
+    function syncSdkRuns(val) {
+      appState.sdkRuns = parseInt(val, 10) || 5;
+      const lbl = document.getElementById('sdk-runs-val');
+      if (lbl) lbl.textContent = String(appState.sdkRuns);
+      updateSdkEconomics();
+      savePersistedState();
+    }
+
+    function estimateMonthlyCost(runsPerDay, hqModel, workerModel, maxTurns) {
+      const turnFactor = maxTurns === 30 ? 1.25 : 0.85;
+      const hqRates = { 'gpt-4o-mini': 0.004, 'gpt-4.1': 0.028, 'gpt-4o': 0.045 };
+      const workerRates = { 'free-tier': 0, 'deepseek-v3': 0.008, 'gpt-4o-mini': 0.015, 'gpt-4o': 0.16 };
+      const daily = runsPerDay * ((hqRates[hqModel] || 0.01) + (workerRates[workerModel] || 0.01) * turnFactor);
+      return Number((daily * 30).toFixed(2));
+    }
+
+    function updateSdkEconomics() {
+      const hqEl = document.getElementById('sdk-hq-model');
+      const workerEl = document.getElementById('sdk-worker-model');
+      const turnsEl = document.getElementById('sdk-turns');
+      const costOut = document.getElementById('sdk-monthly-cost');
+      const codeOut = document.getElementById('sdk-code-out');
+      if (!hqEl || !workerEl || !turnsEl) return;
+
+      const runs = appState.sdkRuns;
+      const hq = hqEl.value;
+      const worker = workerEl.value;
+      const turns = parseInt(turnsEl.value, 10) || 30;
+
+      const currentCost = estimateMonthlyCost(runs, hq, worker, turns);
+      if (costOut) costOut.textContent = `$` + currentCost.toFixed(2) + ` / мес`;
+
+      if (codeOut) {
+        const useDeepSeek = (worker === 'deepseek-v3');
+        const workerModelName = (worker === 'free-tier') ? `gpt-4o-mini (Free Sharing)` : worker;
+        codeOut.textContent =
+          `// config/ai.ts + video-editor.ts\n` +
+          `export const AI_CONFIG = {\n` +
+          `  ORCHESTRATOR_MODEL: '${hq}',\n` +
+          `  AGENT_MODEL: '${workerModelName}',\n` +
+          (useDeepSeek ? `  BASE_URL: 'api.deepseek.com', // OpenAI-compatible\n` : ``) +
+          `};\n\n` +
+          `export const videoEditorAgent = new Agent({\n` +
+          `  name: 'Video Editor',\n` +
+          `  model: AI_CONFIG.AGENT_MODEL,\n` +
+          `  tools: [cloudComputerTool, strapiMcpMemory, artifactTools.save],\n` +
+          `  execution: { maxTurns: ${turns}, reasoningEffort: 'high', timeoutSeconds: 600 }\n` +
+          `});`;
+      }
+
+      const presets = [
+        { label: `Текущая схема`, val: currentCost, color: getCssToken('--data-1') },
+        { label: `HQ gpt-4o-mini + DeepSeek-V3`, val: estimateMonthlyCost(runs, 'gpt-4o-mini', 'deepseek-v3', turns), color: getCssToken('--data-3') },
+        { label: `OpenAI Free Sharing`, val: estimateMonthlyCost(runs, 'gpt-4o-mini', 'free-tier', turns), color: getCssToken('--data-2') },
+        { label: `Всё на GPT-4o`, val: estimateMonthlyCost(runs, 'gpt-4o', 'gpt-4o', turns), color: getCssToken('--data-4') }
+      ];
+
+      const canvas = document.getElementById('llmCostChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      if (llmChart) {
+        llmChart.data.labels = presets.map(function(p) { return p.label; });
+        llmChart.data.datasets[0].data = presets.map(function(p) { return p.val; });
+        llmChart.data.datasets[0].backgroundColor = presets.map(function(p) { return p.color; });
+        llmChart.update();
+      } else {
+        llmChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: presets.map(function(p) { return p.label; }),
+            datasets: [{
+              label: `Расход за 30 дней ($)`,
+              data: presets.map(function(p) { return p.val; }),
+              backgroundColor: presets.map(function(p) { return p.color; }),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                grid: { color: getCssToken('--outline-variant') },
+                ticks: { color: getCssToken('--on-surface-variant') }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { color: getCssToken('--on-surface') }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // =========================================================================
+    // SECTION 06: ENV INSPECTOR & PERSISTENT DEPLOY CHECKLIST
+    // =========================================================================
+    const ENV_GROUPS = {
+      ai: `# ИИ-модели и память Strapi MCP\nOPENAI_API_KEY=sk-proj-...\nDEEPSEEK_API_KEY=sk-...\nSTRAPI_URL=localhost:1337\nSTRAPI_API_TOKEN=full_access_token\nSTRAPI_MCP_TOKEN=admin_bearer_token\nSTRAPI_WEBHOOK_SECRET=super-secret-token`,
+      cloudhike: `# Сервисы CloudHike.dev (Auth, Cloud Computer, Jobs)\nAUTH_API_URL=auth.cloudhike.dev/project_id\nAUTH_API_KEY=ch_auth_...\nCOMPUTERS_API_URL=computers.cloudhike.dev\nCOMPUTERS_API_KEY=ch_pc_...\nJOB_API_URL=jobs.cloudhike.dev\nJOB_API_KEY=ch_job_...\nPOST_PUBLISH_CRON=*/5 * * * *`,
+      media: `# ImageKit CDN, Composio и сокеты Pusher\nIMAGEKIT_PUBLIC_KEY=public_...\nIMAGEKIT_PRIVATE_KEY=private_...\nIMAGEKIT_URL_ENDPOINT=ik.imagekit.io/creator_city\nCOMPOSIO_API_KEY=comp_...\nPUSHER_APP_ID=189000\nPUSHER_KEY=pusher_key\nPUSHER_SECRET=pusher_secret\nNEXT_PUBLIC_PUSHER_KEY=pusher_key\nNEXT_PUBLIC_PUSHER_CLUSTER=eu`
+    };
+
+    let activeEnvGroup = 'all';
+
+    function filterEnvGroup(group) {
+      activeEnvGroup = group;
+      ['all', 'ai', 'cloudhike', 'media'].forEach(function(g) {
+        const btn = document.getElementById('env-tab-' + g);
+        if (btn) btn.classList.toggle('btn-active', g === group);
+      });
+      const out = document.getElementById('env-code-out');
+      if (!out) return;
+      if (group === 'all') {
+        out.textContent = ENV_GROUPS.ai + `\n\n` + ENV_GROUPS.cloudhike + `\n\n` + ENV_GROUPS.media;
+      } else {
+        out.textContent = ENV_GROUPS[group] || ENV_GROUPS.ai;
+      }
+    }
+
+    function copyEnvSnippet() {
+      const out = document.getElementById('env-code-out');
+      const status = document.getElementById('env-copy-status');
+      if (!out || !status) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(out.textContent).then(function() {
+          status.textContent = `Скопировано в буфер обмена!`;
+        }).catch(function() {
+          status.textContent = `Выделите текст выше для копирования.`;
+        });
+      } else {
+        status.textContent = `Выделите текст выше для копирования.`;
+      }
+    }
+
+    const DEPLOY_STEPS = [
+      { id: `step1`, title: `1. Клонировать стартер Next.js и установить пакеты`, detail: `git clone github.com/rrs301/ai-agent-city-for-content-creator && npm install` },
+      { id: `step2`, title: `2. Развернуть PostgreSQL на CloudHike и создать Strapi CMS`, detail: `npx create-strapi@latest (выбрать Postgres, подключить host/port/user/pass от CloudHike)` },
+      { id: `step3`, title: `3. Включить Strapi MCP и создать токены доступа`, detail: `config/server.js → mcp: { enabled: true }, сгенерировать Admin Token и Full Access API Token` },
+      { id: `step4`, title: `4. Настроить CloudHike Auth (Email + Google OAuth)`, detail: `Задеплоить Auth-сервис, указать origin localhost:3000 для локальной разработки` },
+      { id: `step5`, title: `5. Подключить плагин ImageKit к Strapi Media Library`, detail: `Указать Public/Private ключи, папку /creator city и отключить лишние responsive-варианты` },
+      { id: `step6`, title: `6. Развернуть Cloud Computer (1 CPU / 2 GB) и Composio`, detail: `Установить Stop when idle = 3 мин в CloudHike, добавить COMPOSIO_API_KEY в .env.local` },
+      { id: `step7`, title: `7. Запустить локально оба сервера`, detail: `Strapi: npm run develop (порт 1337) и Next.js: npm run dev (порт 3000), создать HQ` },
+      { id: `step8`, title: `8. Продакшн-деплой на Vercel и CloudHike / Strapi Cloud`, detail: `Импортировать .env на Vercel, задеплоить Strapi, обновить OAuth URL, Webhook и POST_PUBLISH_CRON` }
+    ];
+
+    function renderChecklist() {
+      const container = document.getElementById('deploy-checklist');
+      const fill = document.getElementById('checklist-progress-fill');
+      const label = document.getElementById('checklist-progress-label');
+      if (!container) return;
+
+      const doneSet = appState.completedChecklist || [];
+      container.innerHTML = DEPLOY_STEPS.map(function(st) {
+        const isDone = doneSet.indexOf(st.id) !== -1;
+        return `<div class="checklist-item` + (isDone ? ` is-done` : ``) + `" role="checkbox" aria-checked="` + isDone + `" tabindex="0" onclick="toggleChecklistItem('` + st.id + `')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChecklistItem('` + st.id + `');}">` +
+          `<span class="check-box-ui">` + (isDone ? `✓` : ``) + `</span>` +
+          `<div><strong style="display: block; font-size: 0.9rem;">` + st.title + `</strong>` +
+          `<span style="font-family: var(--font-label); font-size: 0.76rem; color: var(--on-surface-variant);">` + st.detail + `</span></div>` +
+          `</div>`;
+      }).join('');
+
+      const pct = Math.round((doneSet.length / DEPLOY_STEPS.length) * 100);
+      if (fill) fill.style.width = pct + `%`;
+      if (label) label.textContent = doneSet.length + ` / ` + DEPLOY_STEPS.length;
+    }
+
+    function toggleChecklistItem(id) {
+      const idx = appState.completedChecklist.indexOf(id);
+      if (idx === -1) {
+        appState.completedChecklist.push(id);
+      } else {
+        appState.completedChecklist.splice(idx, 1);
+      }
+      renderChecklist();
+      savePersistedState();
+    }
+
+    function handleResetChecklist(btn) {
+      if (!btn) return;
+      if (btn.dataset.armed !== 'true') {
+        btn.dataset.armed = 'true';
+        btn.textContent = `Подтвердить сброс?`;
+        return;
+      }
+      btn.dataset.armed = 'false';
+      btn.textContent = `Сбросить`;
+      appState.completedChecklist = [];
+      renderChecklist();
+      savePersistedState();
+    }
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    async function initApp() {
+      if (window.notebookAppApi && typeof window.notebookAppApi.getAppState === 'function') {
+        try {
+          const saved = await window.notebookAppApi.getAppState();
+          if (saved && typeof saved === 'object') {
+            appState = Object.assign({}, appState, saved);
+          }
+        } catch (e) {
+          // Ignore if unavailable
+        }
+      }
+
+      // Restore UI from state
+      setHqStyle(appState.hqStyle || 'Empire');
+      if (appState.isNight) {
+        const stage = document.getElementById('city-stage');
+        const btn = document.getElementById('btn-day-night');
+        if (stage) stage.classList.add('is-night');
+        if (btn) btn.textContent = `Режим: Ночь`;
+      }
+      const scSelect = document.getElementById('scenario-select');
+      if (scSelect && appState.scenarioKey) scSelect.value = appState.scenarioKey;
+      resetCityPipeline();
+
+      selectStrapiCollection(appState.selectedCol || 'memories');
+      switchMcpTab('claude');
+      setLiveControlStage(1);
+
+      const ikRatioEl = document.getElementById('ik-ratio');
+      const ikOpEl = document.getElementById('ik-op');
+      if (ikRatioEl && appState.ikRatio) ikRatioEl.value = appState.ikRatio;
+      if (ikOpEl && appState.ikOp) ikOpEl.value = appState.ikOp;
+      updateImageKitPreview();
+      renderCalendar();
+
+      const runsSlider = document.getElementById('sdk-runs');
+      const runsVal = document.getElementById('sdk-runs-val');
+      if (runsSlider) runsSlider.value = String(appState.sdkRuns || 5);
+      if (runsVal) runsVal.textContent = String(appState.sdkRuns || 5);
+      updateSdkEconomics();
+
+      filterEnvGroup('all');
+      renderChecklist();
+
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+      if (window.notebookAppApi && typeof window.notebookAppApi.notifyAppReady === 'function') {
+        window.notebookAppApi.notifyAppReady();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
