@@ -1,0 +1,2490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="narrative">
+  <meta name="design-style" content="carbon">
+  <title>Инженерная архитектура ИИ-разработки: Senior Workflows, PStack, T3 Code и Decodo</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@1.43.0/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root {
+      color-scheme: light;
+
+      /* Palette: Blue-gray Carbon adaptation */
+      --background: #ffffff;
+      --surface-container-low: #f5f9fc;
+      --surface-container: #eaf1f8;
+      --surface-container-high: #dce6f2;
+      --surface-code: #142230;
+      --on-surface-code: #eaf1f8;
+
+      /* Ink */
+      --on-surface: #121e2a;
+      --on-surface-variant: #3e5163;
+
+      /* Rules */
+      --outline: #647f99;
+      --outline-variant: #c4d5e5;
+
+      /* Accents */
+      --primary: #355f84;
+      --primary-hover: #274764;
+      --on-primary: #ffffff;
+      --primary-container: #d7e5f2;
+      --on-primary-container: #121e2a;
+      --secondary: #4e6b85;
+      --tertiary: #1d6b47;
+      --error: #b82b2b;
+      --on-error: #ffffff;
+
+      /* Semantic & Data */
+      --positive: #1d6b47;
+      --positive-bg: #e3f2eb;
+      --warning: #8f5800;
+      --warning-bg: #fbf2df;
+      --error-bg: #fbe9e9;
+      --data-1: #355f84;
+      --data-2: #8baecf;
+      --data-3: #1d6b47;
+      --data-4: #4e6b85;
+      --data-context: #9ab0c4;
+      --focus: #355f84;
+
+      /* Typography */
+      --font-headline: 'IBM Plex Sans', sans-serif;
+      --font-body: 'IBM Plex Sans', sans-serif;
+      --font-label: 'IBM Plex Mono', monospace;
+
+      --display-size: clamp(2rem, 1.35rem + 2.4vw, 3.1rem);
+      --headline-size: clamp(1.5rem, 1.2rem + 1.1vw, 2.05rem);
+      --subhead-size: clamp(1.125rem, 1.02rem + 0.45vw, 1.35rem);
+      --body-size: clamp(1rem, 0.96rem + 0.18vw, 1.08rem);
+      --label-size: 0.75rem;
+
+      /* Shape */
+      --rounded: 0.125rem;
+      --rounded-lg: 0.25rem;
+      --rounded-full: 0.75rem;
+
+      /* Spacing (4pt base) */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+      --space-3xl: 5.5rem;
+
+      /* Effects */
+      --shadow-1: 0 2px 6px rgba(18, 30, 42, 0.08);
+      --shadow-2: 0 6px 16px rgba(18, 30, 42, 0.12);
+      --rule: 1px solid var(--outline-variant);
+      --field-rule: 1px solid var(--outline);
+      --indicator: 2px solid var(--primary);
+      --indicator-thick: 4px solid var(--primary);
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+      --dur-long: 420ms;
+    }
+
+    /* Base Reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+      background: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: static !important; }
+    button, input, select, textarea { font-family: inherit; }
+
+    /* Focus Accessibility */
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    /* Layout Shell */
+    .masthead {
+      border-top: var(--indicator-thick);
+      border-bottom: var(--rule);
+      background: var(--surface-container-low);
+      padding: var(--space-xl) var(--space-lg) var(--space-lg);
+    }
+    .masthead-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .page-grid {
+      display: grid;
+      grid-template-columns: minmax(230px, 270px) minmax(0, 1fr);
+      gap: var(--space-xl);
+      padding: var(--space-xl) var(--space-lg) var(--space-3xl);
+      max-width: 1180px;
+      margin: 0 auto;
+      align-items: start;
+    }
+    .page-grid * { min-width: 0; }
+
+    /* Typography */
+    .eyebrow {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      font-weight: 600;
+      margin: 0 0 var(--space-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .display-title {
+      font-family: var(--font-headline);
+      font-size: var(--display-size);
+      font-weight: 300;
+      line-height: 1.16;
+      margin: 0 0 var(--space-md);
+      color: var(--on-surface);
+      max-width: 24ch;
+    }
+    .display-title strong { font-weight: 600; }
+
+    .lede {
+      font-size: var(--subhead-size);
+      color: var(--on-surface-variant);
+      line-height: 1.5;
+      max-width: 66ch;
+      margin: 0 0 var(--space-lg);
+    }
+
+    h2.section-title {
+      font-family: var(--font-headline);
+      font-size: var(--headline-size);
+      font-weight: 300;
+      line-height: 1.22;
+      margin: 0 0 var(--space-sm);
+      color: var(--on-surface);
+    }
+    h2.section-title strong { font-weight: 600; }
+
+    h3.sub-title {
+      font-family: var(--font-headline);
+      font-size: var(--subhead-size);
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 0 0 var(--space-sm);
+      color: var(--on-surface);
+    }
+
+    p { margin: 0 0 var(--space-md); max-width: 68ch; }
+    .muted { color: var(--on-surface-variant); font-size: 0.9375rem; }
+
+    .mono-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--on-surface-variant);
+      display: block;
+    }
+
+    .source-tag {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+      border-left: 2px solid var(--data-2);
+      padding-left: var(--space-sm);
+      margin-top: var(--space-sm);
+      display: block;
+    }
+
+    /* Header KPI Strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+    .kpi-tile {
+      background: var(--surface-container);
+      padding: var(--space-md);
+      border-bottom: var(--indicator);
+    }
+    .kpi-val {
+      font-family: var(--font-label);
+      font-size: 1.65rem;
+      font-weight: 400;
+      color: var(--primary);
+      line-height: 1.2;
+      margin: var(--space-xs) 0;
+    }
+    .kpi-desc {
+      font-size: 0.85rem;
+      color: var(--on-surface-variant);
+      margin: 0;
+    }
+
+    /* Sidebar Contents List (Оглавление) */
+    .toc-aside {
+      position: sticky;
+      top: var(--space-lg);
+      background: var(--surface-container-low);
+      border: var(--rule);
+      padding: var(--space-md);
+    }
+    .toc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: var(--rule);
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+    .toc-progress-track {
+      width: 100%;
+      height: 4px;
+      background: var(--surface-container-high);
+      margin-bottom: var(--space-md);
+      overflow: hidden;
+    }
+    .toc-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width var(--dur-short) var(--ease-out);
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .toc-btn {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      border-left: 2px solid transparent;
+      padding: var(--space-sm) var(--space-sm);
+      min-height: 44px;
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      color: var(--on-surface-variant);
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1.35;
+      transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+    }
+    .toc-btn:hover {
+      background: var(--surface-container);
+      color: var(--on-surface);
+    }
+    .toc-btn.is-active {
+      border-left-color: var(--primary);
+      background: var(--surface-container);
+      color: var(--on-surface);
+      font-weight: 600;
+    }
+    .toc-num {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--primary);
+      font-weight: 600;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .toc-check {
+      margin-left: auto;
+      color: var(--positive);
+      flex-shrink: 0;
+      display: none;
+    }
+    .toc-btn.is-done .toc-check {
+      display: inline-flex;
+    }
+
+    /* Mobile Contents Drawer / Bar */
+    .mobile-toc {
+      display: none;
+      background: var(--surface-container);
+      border-bottom: var(--rule);
+      padding: var(--space-md) var(--space-lg);
+    }
+    .mobile-toc-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      margin-top: var(--space-sm);
+    }
+
+    /* Main Content Column */
+    .main-flow {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2xl);
+    }
+
+    .step-section {
+      scroll-margin-top: var(--space-lg);
+      padding-top: var(--space-lg);
+      border-top: var(--rule);
+    }
+    .step-section:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--space-md);
+      border-bottom: var(--rule);
+      padding-bottom: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    .step-badge-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xs);
+    }
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      color: var(--on-primary);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      padding: 2px var(--space-sm);
+    }
+
+    /* Flat Carbon Layers */
+    .layer {
+      background: var(--surface-container);
+      padding: var(--space-lg);
+      border-radius: 0;
+    }
+    .layer-low {
+      background: var(--surface-container-low);
+      padding: var(--space-md);
+      border: var(--rule);
+    }
+    .layer .layer {
+      background: var(--surface-container-high);
+    }
+
+    /* Adaptive Card Grid & Container Query */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+      gap: var(--space-md);
+      margin: var(--space-md) 0 var(--space-lg);
+    }
+    .card-wrapper { container-type: inline-size; }
+    .card-inner {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-sm);
+    }
+    @container (min-width: 440px) {
+      .card-inner { grid-template-columns: 1fr 1fr; }
+    }
+
+    .role-card {
+      background: var(--surface-container);
+      padding: var(--space-md);
+      border-top: var(--indicator);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .role-card.accent-soft {
+      border-top-color: var(--data-2);
+    }
+
+    /* Buttons & Segmented Controls */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+      border-radius: var(--rounded);
+      cursor: pointer;
+      text-align: left;
+      transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      background: var(--surface-container);
+      color: var(--on-surface);
+      border-color: var(--outline);
+    }
+    .btn-secondary:hover { background: var(--surface-container-high); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--primary);
+      border-color: var(--outline-variant);
+    }
+    .btn-ghost:hover { background: var(--surface-container-low); }
+
+    .btn-done.is-completed {
+      background: var(--positive-bg);
+      color: var(--positive);
+      border-color: var(--positive);
+    }
+
+    .toggle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .toggle-pill {
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      background: var(--surface-container-low);
+      color: var(--on-surface-variant);
+      border: var(--rule);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+    }
+    .toggle-pill:hover {
+      background: var(--surface-container);
+      color: var(--on-surface);
+    }
+    .toggle-pill.is-active {
+      background: var(--surface-container);
+      color: var(--on-surface);
+      font-weight: 600;
+      border-bottom: var(--indicator);
+    }
+
+    /* Callouts & Notices */
+    .callout {
+      background: var(--surface-container);
+      border-left: 3px solid var(--primary);
+      padding: var(--space-md);
+      margin: var(--space-md) 0;
+    }
+    .callout.is-warning {
+      background: var(--warning-bg);
+      border-left-color: var(--warning);
+    }
+    .callout.is-positive {
+      background: var(--positive-bg);
+      border-left-color: var(--positive);
+    }
+    .callout.is-error {
+      background: var(--error-bg);
+      border-left-color: var(--error);
+    }
+
+    /* Badges & Tags */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 var(--space-sm);
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+      border-radius: var(--rounded-full);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 500;
+    }
+    .tag.is-ok { background: var(--positive-bg); color: var(--positive); }
+    .tag.is-warn { background: var(--warning-bg); color: var(--warning); }
+    .tag.is-err { background: var(--error-bg); color: var(--error); }
+
+    /* Interactive Diagram Frame */
+    .diagram-box {
+      background: var(--surface-container-low);
+      border: var(--rule);
+      padding: var(--space-md);
+      margin: var(--space-md) 0 var(--space-lg);
+    }
+    .diagram-svg-wrap {
+      width: 100%;
+      overflow-x: auto;
+      padding: var(--space-sm) 0;
+    }
+    .diagram-svg-wrap svg {
+      width: 100%;
+      min-width: 580px;
+      height: auto;
+      display: block;
+    }
+    .svg-node { cursor: pointer; transition: opacity var(--dur-micro) var(--ease-out); }
+    .svg-node:hover { opacity: 0.88; }
+    .diagram-detail {
+      background: var(--background);
+      border: var(--rule);
+      border-left: 3px solid var(--primary);
+      padding: var(--space-md);
+      margin-top: var(--space-md);
+    }
+
+    /* Chart Container */
+    .chart-card {
+      background: var(--surface-container-low);
+      border: var(--rule);
+      padding: var(--space-md);
+      margin: var(--space-md) 0 var(--space-lg);
+    }
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      min-height: 300px;
+      height: 320px;
+    }
+
+    /* Expandable Disclosures */
+    .disclosure-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      margin: var(--space-md) 0 var(--space-lg);
+    }
+    details.disclosure {
+      background: var(--surface-container-low);
+      border: var(--rule);
+    }
+    details.disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: var(--space-md);
+      min-height: 44px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-md);
+      color: var(--on-surface);
+      user-select: none;
+    }
+    details.disclosure summary::-webkit-details-marker { display: none; }
+    details.disclosure summary:hover { background: var(--surface-container); }
+    details.disclosure[open] summary {
+      background: var(--surface-container);
+      border-bottom: var(--rule);
+    }
+    .disclosure-body {
+      padding: var(--space-md);
+      background: var(--background);
+    }
+    .chevron-icon {
+      transition: transform var(--dur-short) var(--ease-out);
+      flex-shrink: 0;
+    }
+    details[open] .chevron-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Code Blocks */
+    .code-panel {
+      background: var(--surface-code);
+      color: var(--on-surface-code);
+      margin: var(--space-md) 0 var(--space-lg);
+      border: 1px solid var(--primary);
+    }
+    .code-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--on-surface);
+      border-bottom: 1px solid var(--outline);
+    }
+    .code-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+    }
+    .code-tab {
+      min-height: 36px;
+      padding: var(--space-xs) var(--space-sm);
+      background: transparent;
+      color: var(--data-2);
+      border: 1px solid transparent;
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      cursor: pointer;
+    }
+    .code-tab.is-active {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+    .copy-btn {
+      min-height: 36px;
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--primary);
+      color: var(--on-primary);
+      border: 0;
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .copy-btn:hover { background: var(--primary-hover); }
+    pre.code-pre {
+      margin: 0;
+      padding: var(--space-md);
+      overflow-x: auto;
+      font-family: var(--font-label);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: var(--on-surface-code);
+    }
+
+    /* Tables & Evidence Matrix */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin: var(--space-md) 0 var(--space-lg);
+      border: var(--rule);
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      min-width: 600px;
+    }
+    table.data-table th {
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: left;
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: var(--rule);
+    }
+    table.data-table td {
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: var(--rule);
+      vertical-align: top;
+    }
+    table.data-table tbody tr:nth-child(even) {
+      background: var(--surface-container-low);
+    }
+    table.data-table tbody tr.is-selected {
+      background: var(--primary-container);
+    }
+
+    /* Pipeline Simulator */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+    .sim-node {
+      background: var(--background);
+      border: var(--rule);
+      padding: var(--space-sm);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      cursor: pointer;
+      text-align: left;
+      min-height: 44px;
+    }
+    .sim-node.is-current {
+      background: var(--primary-container);
+      border-color: var(--primary);
+      border-bottom: var(--indicator);
+    }
+    .sim-node.is-visited {
+      border-left: 3px solid var(--positive);
+    }
+
+    /* Checklist & Persistence Bar */
+    .checklist-row {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      border-bottom: var(--rule);
+      background: var(--background);
+    }
+    .checklist-row:nth-child(even) {
+      background: var(--surface-container-low);
+    }
+    .checklist-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checklist-row label {
+      cursor: pointer;
+      flex: 1;
+      font-size: 0.95rem;
+    }
+    .checklist-row.is-checked label {
+      color: var(--on-surface-variant);
+      text-decoration: line-through;
+    }
+
+    /* Step Footer Navigation */
+    .step-nav-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+      padding-top: var(--space-md);
+      border-top: var(--rule);
+    }
+
+    /* Form Filter Input */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      max-width: 340px;
+    }
+    .field-label {
+      font-size: var(--label-size);
+      font-family: var(--font-label);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--on-surface-variant);
+      font-weight: 500;
+    }
+    .field-input {
+      height: 40px;
+      background: var(--surface-container-low);
+      border: 0;
+      border-bottom: var(--field-rule);
+      padding: 0 var(--space-md);
+      color: var(--on-surface);
+      font-size: 0.95rem;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 920px) {
+      .page-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-lg);
+      }
+      .toc-aside { display: none; }
+      .mobile-toc { display: block; }
+    }
+
+    @media (max-width: 640px) {
+      .masthead { padding: var(--space-lg) var(--space-md); }
+      .page-grid { padding: var(--space-md); }
+      .mobile-toc { padding: var(--space-md); }
+      .layer { padding: var(--space-md); }
+      .chart-wrap { min-height: 250px; height: 260px; }
+      .step-nav-footer { flex-direction: column; align-items: stretch; }
+      .btn { width: 100%; justify-content: space-between; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MASTHEAD -->
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">
+        <i data-lucide="layers" aria-hidden="true" width="16" height="16"></i>
+        Пошаговый инженерный разбор
+      </p>
+      <h1 class="display-title">Как устроена <strong>автономная ИИ-разработка</strong> на уровне Senior-инженера</h1>
+      <p class="lede">
+        Полный цикл создания надёжных систем с кодинг-агентами: от единого источника правды в <code>PRD.md</code> и ролевого делегирования моделей до фреймворка <strong>PStack</strong>, изолированных Git Worktrees в <strong>T3 Code</strong> и живых веб-данных через <strong>Decodo</strong>.
+      </p>
+
+      <div class="kpi-strip">
+        <div class="kpi-tile">
+          <span class="mono-label">Деградация контекста</span>
+          <div class="kpi-val">&gt; 500K ток.</div>
+          <p class="kpi-desc">Экспоненциальное падение качества при попытке «one-shot» генерации</p>
+        </div>
+        <div class="kpi-tile">
+          <span class="mono-label">Плейбуки PStack</span>
+          <div class="kpi-val">23 сценария</div>
+          <p class="kpi-desc">Строгие алгоритмы и 24 принципа через единый вход <code>/poteto-mode</code></p>
+        </div>
+        <div class="kpi-tile">
+          <span class="mono-label">Изоляция в T3 Code</span>
+          <div class="kpi-val">70K+ звёзд</div>
+          <p class="kpi-desc">Отдельный Git Worktree, ADE-браузер и PR в 1 клик без переплаты за токены</p>
+        </div>
+        <div class="kpi-tile">
+          <span class="mono-label">Сеть Decodo</span>
+          <div class="kpi-val">125M+ IP</div>
+          <p class="kpi-desc">195+ локаций, 99.99% аптайм, &lt;0.2с отклик и LLM-ready Markdown</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE CONTENTS BAR -->
+  <nav class="mobile-toc" aria-label="Оглавление для мобильных устройств">
+    <span class="mono-label">Оглавление (шаги 01–05)</span>
+    <div class="mobile-toc-grid">
+      <button type="button" class="toggle-pill" onclick="jumpToStep('step-1')">01. Senior Workflows</button>
+      <button type="button" class="toggle-pill" onclick="jumpToStep('step-2')">02. PStack &amp; Poteto</button>
+      <button type="button" class="toggle-pill" onclick="jumpToStep('step-3')">03. T3 Code</button>
+      <button type="button" class="toggle-pill" onclick="jumpToStep('step-4')">04. Decodo API</button>
+      <button type="button" class="toggle-pill" onclick="jumpToStep('step-5')">05. Матрица и источники</button>
+    </div>
+  </nav>
+
+  <!-- MAIN GRID -->
+  <div class="page-grid">
+
+    <!-- SIDEBAR CONTENTS LIST -->
+    <aside class="toc-aside" aria-label="Оглавление">
+      <div class="toc-header">
+        <span class="mono-label">Оглавление</span>
+        <span class="mono-label" id="progress-label">0 / 5 изучено</span>
+      </div>
+      <div class="toc-progress-track" aria-hidden="true">
+        <div class="toc-progress-fill" id="progress-fill"></div>
+      </div>
+      <ul class="toc-list">
+        <li>
+          <button type="button" class="toc-btn is-active" id="toc-step-1" onclick="jumpToStep('step-1')">
+            <span class="toc-num">01</span>
+            <span>Рабочие процессы Senior-инженера</span>
+            <span class="toc-check" aria-label="Изучено"><i data-lucide="check" width="14" height="14" aria-hidden="true"></i></span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="toc-btn" id="toc-step-2" onclick="jumpToStep('step-2')">
+            <span class="toc-num">02</span>
+            <span>Фреймворк PStack и /poteto-mode</span>
+            <span class="toc-check" aria-label="Изучено"><i data-lucide="check" width="14" height="14" aria-hidden="true"></i></span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="toc-btn" id="toc-step-3" onclick="jumpToStep('step-3')">
+            <span class="toc-num">03</span>
+            <span>Платформа T3 Code и Worktrees</span>
+            <span class="toc-check" aria-label="Изучено"><i data-lucide="check" width="14" height="14" aria-hidden="true"></i></span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="toc-btn" id="toc-step-4" onclick="jumpToStep('step-4')">
+            <span class="toc-num">04</span>
+            <span>Decodo Platform и Web Data API</span>
+            <span class="toc-check" aria-label="Изучено"><i data-lucide="check" width="14" height="14" aria-hidden="true"></i></span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="toc-btn" id="toc-step-5" onclick="jumpToStep('step-5')">
+            <span class="toc-num">05</span>
+            <span>Матрица доказательств и чек-лист</span>
+            <span class="toc-check" aria-label="Изучено"><i data-lucide="check" width="14" height="14" aria-hidden="true"></i></span>
+          </button>
+        </li>
+      </ul>
+
+      <div class="layer-low" style="margin-top: var(--space-md);">
+        <span class="mono-label">Навигация по шагам</span>
+        <p class="muted" style="margin: var(--space-xs) 0 var(--space-sm); font-size: 0.84rem;">
+          Отмечайте пройденные разделы — прогресс и чек-лист сохраняются автоматически.
+        </p>
+        <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="exportChecklist()">
+          <i data-lucide="download" width="16" height="16" aria-hidden="true"></i>
+          <span>Экспорт конспекта</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- NARRATIVE STEPS -->
+    <main class="main-flow">
+
+      <!-- ==================== STEP 1 ==================== -->
+      <section id="step-1" class="step-section">
+        <div class="section-head">
+          <div>
+            <div class="step-badge-row">
+              <span class="step-badge">ШАГ 01</span>
+              <span class="mono-label">Фундамент и декомпозиция</span>
+            </div>
+            <h2 class="section-title">Senior-процессы: <strong>контракт до первой строки кода</strong></h2>
+          </div>
+          <button type="button" class="btn btn-ghost btn-done" id="done-btn-step-1" onclick="toggleStepDone('step-1')">
+            <i data-lucide="check-circle" width="16" height="16" aria-hidden="true"></i>
+            <span>Отметить шаг</span>
+          </button>
+        </div>
+
+        <p>
+          Два инженера с одной и той же моделью и одинаковым кодинг-агентом получают принципиально разный результат при создании исследовательского агента <strong>Research Marshall</strong>. Первый сразу вводит общий промпт и через 10 минут получает «AI-slop»: половина кнопок не работает, а источники в отчёте выдуманы. Второй сначала фиксирует требования, примитивы данных, границы системы и метод проверки — и только затем запускает агентов.
+        </p>
+
+        <!-- Interactive Comparison Toggle -->
+        <div class="diagram-box">
+          <span class="mono-label" style="margin-bottom: var(--space-sm);">Интерактивное сравнение подходов</span>
+          <div class="toggle-row" role="tablist" aria-label="Сравнение подходов разработки">
+            <button type="button" class="toggle-pill is-active" id="cmp-btn-senior" onclick="setApproachView('senior')">
+              Подход Senior-инженера (контракт + фазы)
+            </button>
+            <button type="button" class="toggle-pill" id="cmp-btn-oneshot" onclick="setApproachView('oneshot')">
+              Наивный One-Shot подход (AI-slop)
+            </button>
+          </div>
+          <div id="approach-panel" class="diagram-detail">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <h3 class="sub-title">Единый источник правды: PRD.md и agents.md</h3>
+        <p>
+          Чтобы кодинг-агент работал автономно и не дёргал разработчика по каждому мелкому вопросу, на этапе фундамента создаются два взаимосвязанных документа. <code>PRD.md</code> фиксирует суть продукта, единую терминологию (один термин на одну сущность, без смешивания <em>organization / workspace / tenant</em>), 4 ключевых примитива и жёсткие ограничения («без логина и ролей», «локально на SQLite»). Файл <code>agents.md</code> — это стандартизированный вход в корне репозитория, который прямо направляет каждого агента в <code>PRD.md</code> и <code>techstack.md</code>.
+        </p>
+
+        <!-- File Inspector Switcher -->
+        <div class="code-panel">
+          <div class="code-toolbar">
+            <div class="code-tabs">
+              <button type="button" class="code-tab is-active" id="tab-prd" onclick="setDocTab('prd')">PRD.md (пример примитивов)</button>
+              <button type="button" class="code-tab" id="tab-agents" onclick="setDocTab('agents')">agents.md (маршрутизация)</button>
+              <button type="button" class="code-tab" id="tab-prompt" onclick="setDocTab('prompt')">Формула промпта (3 блока)</button>
+            </div>
+            <button type="button" class="copy-btn" onclick="copyCodeBlock('doc-code-pre', this)">
+              <i data-lucide="copy" width="14" height="14" aria-hidden="true"></i>
+              <span>Копировать</span>
+            </button>
+          </div>
+          <pre class="code-pre" id="doc-code-pre"></pre>
+        </div>
+
+        <h3 class="sub-title">Ролевое делегирование моделей (Multi-Role Delegation)</h3>
+        <p>
+          У каждой LLM свой профиль стоимости, скорости и глубины рассуждений. Senior-инженер не отдаёт весь проект одной дорогой или одной дешёвой модели, а распределяет три чёткие роли (плюс специализированный субагент для графики при необходимости).
+        </p>
+
+        <div class="card-grid">
+          <div class="role-card">
+            <span class="mono-label">Lead / Elite Agent</span>
+            <h4 class="sub-title" style="margin: 0;">Fable 5.2 (High Reasoning)</h4>
+            <p class="muted" style="margin: 0;">
+              Проектирует архитектуру, формирует <code>PRD.md</code>, оценивает UI, управляет плейбуком и проводит финальное ревью diff. Высокая стоимость токенов оправдана точечным применением.
+            </p>
+            <span class="tag">Планирование и аудит</span>
+          </div>
+          <div class="role-card">
+            <span class="mono-label">Implementor Agent</span>
+            <h4 class="sub-title" style="margin: 0;">Opus 5.5 (Medium Reasoning)</h4>
+            <p class="muted" style="margin: 0;">
+              Основная рабочая лошадка написания кода. Запускается в изолированных субагентах по конкретным модулям и фазам, сочетая высокий интеллект с предсказуемой ценой.
+            </p>
+            <span class="tag">Написание кода</span>
+          </div>
+          <div class="role-card accent-soft">
+            <span class="mono-label">Researcher Agent</span>
+            <h4 class="sub-title" style="margin: 0;">Sonnet 5.5 / Haiku 5.5</h4>
+            <p class="muted" style="margin: 0;">
+              Быстрый и экономичный поиск по кодовой базе, чтение документации и веб-исследование без расходования дорогого контекста Lead-модели. Sonnet 5.5 также стал лучшим синтезатором цитат в Research Marshall.
+            </p>
+            <span class="tag">Поиск и чтение</span>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Поэтапное скоупирование вместо One-Shot</h3>
+        <p>
+          Даже при контекстном окне в 1 миллион токенов производительность модели падает нелинейно. До отметки около 300–400K токенов снижение почти линейное, но после 500K качество деградирует экспоненциально. Поэтому сборка <strong>Research Marshall</strong> разбивается на изолированные сессии с чистым контекстом на каждом этапе.
+        </p>
+
+        <div class="chart-card">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+            <div>
+              <h4 class="sub-title" style="margin: 0;">Деградация качества модели при росте контекста</h4>
+              <span class="mono-label">Ось X: объём контекста (тыс. токенов) · Ось Y: точность выполнения (%)</span>
+            </div>
+            <div class="toggle-row" style="margin: 0;">
+              <button type="button" class="toggle-pill is-active" id="phase-btn-1" onclick="selectPhase(1)">Фаза 1: Фундамент</button>
+              <button type="button" class="toggle-pill" id="phase-btn-2" onclick="selectPhase(2)">Фаза 2: Бэкенд</button>
+              <button type="button" class="toggle-pill" id="phase-btn-3" onclick="selectPhase(3)">Фаза 3: Верификация</button>
+              <button type="button" class="toggle-pill" id="phase-btn-4" onclick="selectPhase(4)">Фаза 4: UI и дизайн</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="contextChart"></canvas>
+          </div>
+          <div id="phase-detail" class="diagram-detail" style="margin-top: var(--space-md);">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <h3 class="sub-title">Мышление «Шеф-повара против повара» в код-ревью</h3>
+        <p>
+          Шеф-повар на кухне не варит каждую порцию лапши сам — он проектирует меню, распределяет задачи поварам (субагентам) и лично дегустирует критичные блюда. В ИИ-разработке инженер не тратит когнитивный ресурс на чтение 100% шаблонного бойлерплейта, но обязан проводить жёсткий аудит в трёх случаях.
+        </p>
+
+        <div class="disclosure-group">
+          <details class="disclosure" open>
+            <summary>
+              <span>1. Критичная для бизнеса и безопасности логика</span>
+              <i data-lucide="chevron-down" class="chevron-icon" width="18" height="18" aria-hidden="true"></i>
+            </summary>
+            <div class="disclosure-body">
+              <p style="margin: 0;">
+                Биллинг (B2B/B2C-подписки), роли и права доступа, аутентификация, валидация финансовых или внешних API-контрактов проверяются построчно. Для базовой настройки фреймворка (Next.js, Tailwind, Biome) достаточно отчёта автотестов и зелёного PR-бота.
+              </p>
+            </div>
+          </details>
+          <details class="disclosure">
+            <summary>
+              <span>2. Сигнал от субагентов или PR-ботов (Cursor BugBot / Devin Review)</span>
+              <i data-lucide="chevron-down" class="chevron-icon" width="18" height="18" aria-hidden="true"></i>
+            </summary>
+            <div class="disclosure-body">
+              <p style="margin: 0;">
+                Если локальный субагент-верификатор или внешний бот в Pull Request сообщает об ошибке (например, во второй фазе <strong>Devin Review</strong> нашёл 5 потенциальных дефектов, 4 из которых подтвердились падающими тестами), инженер разбирает первопричину вместе с агентом и не мерджит PR до устранения корня проблемы.
+              </p>
+            </div>
+          </details>
+          <details class="disclosure">
+            <summary>
+              <span>3. Проверка предположений модели (кейс галлюцинации про Decodo SDK)</span>
+              <i data-lucide="chevron-down" class="chevron-icon" width="18" height="18" aria-hidden="true"></i>
+            </summary>
+            <div class="disclosure-body">
+              <p style="margin: 0;">
+                Модели склонны экономить токены и опираться на устаревшие обучающие данные вместо реального поиска. На этапе выбора стека Lead-агент заявил, что SDK Decodo якобы заброшен с августа 2025 года и имеет пустой README. Senior-инженер проверил документацию вручную: оказалось, официальный TypeScript SDK v3.0 обновлялся 2 недели назад, использует Zod v4 и даёт полную типобезопасность. Вывод: всегда проверять утверждения агента о внешних инструментах реальными вызовами.
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <span class="source-tag">Источники: YouTube Jan Marshal — «How Senior Engineers Actually Code with AI (Full Product Build)»; заметка «Автономия ИИ-кодинга».</span>
+
+        <div class="step-nav-footer">
+          <span class="mono-label">Следующий раздел: стандартизация через PStack</span>
+          <button type="button" class="btn btn-primary" onclick="jumpToStep('step-2')">
+            <span>Шаг 02: Фреймворк PStack и /poteto-mode</span>
+            <i data-lucide="arrow-right" width="16" height="16" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== STEP 2 ==================== -->
+      <section id="step-2" class="step-section">
+        <div class="section-head">
+          <div>
+            <div class="step-badge-row">
+              <span class="step-badge">ШАГ 02</span>
+              <span class="mono-label">Процессы вместо импровизации</span>
+            </div>
+            <h2 class="section-title"><strong>PStack и /poteto-mode</strong>: 23 плейбука, скиллы и принципы</h2>
+          </div>
+          <button type="button" class="btn btn-ghost btn-done" id="done-btn-step-2" onclick="toggleStepDone('step-2')">
+            <i data-lucide="check-circle" width="16" height="16" aria-hidden="true"></i>
+            <span>Отметить шаг</span>
+          </button>
+        </div>
+
+        <p>
+          <strong>PStack</strong> — open-source фреймворк и плагин для Cursor и Claude Code, созданный Лорен Тан (<code>poteto</code>, экс-инженер Meta, Netflix, Cursor, участница команды React). Его девиз: <em>«Чтобы двигаться быстро, сначала идите вглубь»</em>. Вместо того чтобы каждый раз вручную «нянчить» агента («воспроизведи баг → найди корень → исправь → проверь → запушь PR»), разработчик вызывает единую команду <code>/poteto-mode</code> (или <code>/pstack:poteto-mode</code> в Claude Code).
+        </p>
+
+        <div class="callout">
+          <strong>Как включать режим:</strong> обычное нажатие <code>Enter</code> прикрепляет <code>/poteto-mode</code> к одному сообщению. Комбинация <code>Option + Enter</code> (Mac) или <code>Alt + Enter</code> (Windows) активирует постоянный Custom Mode на весь диалог. По умолчанию панель ревью настроена на <code>Fable 5.2 / Opus 5.5 / Gemini 4 Neon</code> (меняется через <code>/setup-pstack</code>).
+        </div>
+
+        <!-- Interactive SVG Workflow Diagram -->
+        <div class="diagram-box">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+            <span class="mono-label">Интерактивная схема PStack (нажмите на узел для деталей)</span>
+            <div class="toggle-row" style="margin: 0;">
+              <button type="button" class="toggle-pill is-active" id="pstack-view-flow" onclick="setPstackDiagramMode('flow')">Маршрутизация и параллелизм</button>
+              <button type="button" class="toggle-pill" id="pstack-view-loop" onclick="setPstackDiagramMode('loop')">Петля верификации (Loop)</button>
+            </div>
+          </div>
+
+          <div class="diagram-svg-wrap" id="pstack-svg-container">
+            <!-- SVG rendered by JS based on mode -->
+          </div>
+          <div id="pstack-node-detail" class="diagram-detail">
+            <!-- Populated on node click -->
+          </div>
+        </div>
+
+        <h3 class="sub-title">Каталог плейбуков PStack</h3>
+        <p>
+          Внутренний роутер <code>/poteto-mode</code> анализирует задачу (желательно структурированную как <strong>Цель + Ограничения + Definition of Done</strong>), выбирает подходящий плейбук (23 сценария в рабочем пайплайне Яна Маршала / 22 основных плейбука в таблице репозитория <code>cursor/plugins</code>) и дословно переносит его шаги в чек-лист агента.
+        </p>
+
+        <div class="field-group" style="margin-bottom: var(--space-md);">
+          <label for="playbook-filter" class="field-label">Фильтр плейбуков по названию или назначению</label>
+          <input type="text" id="playbook-filter" class="field-input" placeholder="Например: feature, bug-fix, autopilot, perf" oninput="filterPlaybooks(this.value)">
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Плейбук</th>
+                <th>Категория</th>
+                <th>Алгоритм работы и ключевой результат</th>
+              </tr>
+            </thead>
+            <tbody id="playbook-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Операционные скиллы и 24 принципа инженерии</h3>
+        <p>
+          Плейбук задаёт <em>порядок шагов</em>, а <strong>функциональные скиллы</strong> определяют <em>как выполнить шаг</em>. Поверх всего действуют <strong>принципиальные скиллы (Principal Skills)</strong> — 24 жёстких правила принятия решений, которые запрещают агентам «срезать углы».
+        </p>
+
+        <div class="disclosure-group">
+          <details class="disclosure" open>
+            <summary>
+              <span>Функциональные скиллы: /architect, /arena, /interrogate, /swarm и /no-comments</span>
+              <i data-lucide="chevron-down" class="chevron-icon" width="18" height="18" aria-hidden="true"></i>
+            </summary>
+            <div class="disclosure-body">
+              <ul style="margin: 0; padding-left: var(--space-lg);">
+                <li><strong>/architect</strong> — проектирует типы, сигнатуры функций и структуру модулей <em>до</em> написания логики на границах вызовов.</li>
+                <li><strong>/arena</strong> — запускает N параллельных конкурирующих реализаций одной задачи и забирает лучшие решения из каждой.</li>
+                <li><strong>/interrogate</strong> — отдаёт diff разным моделям, чтобы попытаться сломать его; в отчёт попадают только проблемы, доказанные реальным запуском.</li>
+                <li><strong>/swarm</strong> — распределяет N параллельных воркеров по разным срезам проекта и собирает единый агрегированный отчёт.</li>
+                <li><strong>/create-verification-skill</strong> — генерирует проектный скрипт проверки и карту функций (<em>feature map</em>).</li>
+                <li><strong>/no-comments</strong> — запускает read-only субагента <code>Comment Sicko</code> для зачистки лишних комментариев перед ревью.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="disclosure">
+            <summary>
+              <span>Ключевые инженерные принципы (Principal Skills): 6 правил без компромиссов</span>
+              <i data-lucide="chevron-down" class="chevron-icon" width="18" height="18" aria-hidden="true"></i>
+            </summary>
+            <div class="disclosure-body">
+              <ul style="margin: 0; padding-left: var(--space-lg);">
+                <li><strong>prove-it-works</strong> — нельзя объявлять задачу готовой на словах или по «оно скомпилировалось»; нужно реальное исполнение, скриншот, лог или чтение БД.</li>
+                <li><strong>fix-root-causes</strong> — трассируй симптом до первопричины; не скрывай баг обходным <code>if</code>, если исходное состояние нелегитимно.</li>
+                <li><strong>boundary-discipline</strong> — валидируй и парси внешние данные (CLI, конфиги, сеть, API через Zod) на границах, доверяй чистым внутренним типам.</li>
+                <li><strong>guard-the-context-window</strong> — выноси тяжёлое чтение файлов и сбор логов в субагентов; в главный тред возвращай только сжатый итог.</li>
+                <li><strong>never-block-on-the-human</strong> — при сомнениях сверяйся с <code>PRD.md</code> и двигайся вперёд; подтверждение спрашивай только перед необратимыми действиями.</li>
+                <li><strong>exhaust-the-design-space</strong> — перед выбором UI или сложного модуля создай 2–3 прототипа и сравни их бок о бок.</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="disclosure">
+            <summary>
+              <span>Бесстрашный параллелизм (Fearless Parallelism) через poteto-agent</span>
+              <i data-lucide="chevron-down" class="chevron-icon" width="18" height="18" aria-hidden="true"></i>
+            </summary>
+            <div class="disclosure-body">
+              <p style="margin: 0;">
+                Вместо запуска одного общего агента (<code>generalPurpose</code>), который игнорирует правила и дрейфует, PStack делегирует задачи обёртке <code>subagent_type: "poteto-agent"</code>. Перед началом работы каждый такой субагент полностью загружает <code>poteto-mode</code> и индекс принципов, работает в отдельном контекстном окне (в проекте Яна при настройке среды верификации одновременно запускались до 22 субагентов, а при обычных задачах — 3–6 субагентов) и гарантирует проверяемый результат.
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <span class="source-tag">Источники: GitHub cursor/plugins (plugins/pstack); заметки «Фреймворк PStack», «Плейбуки PStack», «Режим Poteto Mode», «Агенты PStack».</span>
+
+        <div class="step-nav-footer">
+          <button type="button" class="btn btn-secondary" onclick="jumpToStep('step-1')">
+            <i data-lucide="arrow-left" width="16" height="16" aria-hidden="true"></i>
+            <span>Назад: Шаг 01</span>
+          </button>
+          <button type="button" class="btn btn-primary" onclick="jumpToStep('step-3')">
+            <span>Шаг 03: Платформа T3 Code</span>
+            <i data-lucide="arrow-right" width="16" height="16" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== STEP 3 ==================== -->
+      <section id="step-3" class="step-section">
+        <div class="section-head">
+          <div>
+            <div class="step-badge-row">
+              <span class="step-badge">ШАГ 03</span>
+              <span class="mono-label">Среда исполнения и изоляция</span>
+            </div>
+            <h2 class="section-title"><strong>T3 Code</strong>: ADE-браузер, Git Worktrees и PR в один клик</h2>
+          </div>
+          <button type="button" class="btn btn-ghost btn-done" id="done-btn-step-3" onclick="toggleStepDone('step-3')">
+            <i data-lucide="check-circle" width="16" height="16" aria-hidden="true"></i>
+            <span>Отметить шаг</span>
+          </button>
+        </div>
+
+        <p>
+          <strong>T3 Code</strong> — open-source графическая панель управления кодинг-агентами (ADE, лицензия MIT, более 70 000 звёзд на GitHub). Она объединяет ваши собственные подписки на <strong>Claude Code, Codex, Cursor, OpenCode, Grok и Antigravity</strong> без наценки на токены, позволяет переключать модели прямо внутри одного треда (<em>mid-thread</em>) и подключаться удалённо с телефона (iOS/Android) или веб-браузера.
+        </p>
+
+        <!-- Toggleable Worktree Diagram -->
+        <div class="diagram-box">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+            <span class="mono-label">Механизм изоляции субагентов: Git Worktrees</span>
+            <div class="toggle-row" style="margin: 0;">
+              <button type="button" class="toggle-pill is-active" id="wt-btn-isolated" onclick="setWorktreeMode('isolated')">С изоляцией Worktree + Bootstrap</button>
+              <button type="button" class="toggle-pill" id="wt-btn-unisolated" onclick="setWorktreeMode('unisolated')">Типичный сбой без Bootstrap</button>
+            </div>
+          </div>
+          <div id="worktree-diagram-panel">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <h3 class="sub-title">Пять механизмов автономной работы в T3 Code</h3>
+        <div class="card-grid">
+          <div class="role-card">
+            <span class="mono-label">01 · Встроенный ADE-браузер</span>
+            <p style="margin: 0;">
+              Если агент не видит интерфейс, он «летит вслепую». T3 Code даёт встроенный браузер: агент открывает локальные маршруты, кликает по кнопкам, снимает скриншоты и принимает точечные правки через инструмент <strong>Annotate</strong>.
+            </p>
+          </div>
+          <div class="role-card">
+            <span class="mono-label">02 · Автоматический Bootstrap</span>
+            <p style="margin: 0;">
+              Новый Git Worktree по умолчанию пуст: в нём нет <code>node_modules</code>, <code>.env.local</code> и конфигурации <code>.claude</code>. Скрипты <code>pnpm bootstrap</code>, <code>pnpm doctor</code> и session-start хуки автоматически линкуют зависимости и ключи API.
+            </p>
+          </div>
+          <div class="role-card">
+            <span class="mono-label">03 · Просмотр и сохранение кода</span>
+            <p style="margin: 0;">
+              Все изменения сразу пишутся в реальные файлы на диске (JS, TS, Python, HTML/CSS). Встроенный <strong>Inline Diff Review</strong> позволяет просмотреть каждую изменённую строку до коммита или открыть проект в VS Code и Cursor.
+            </p>
+          </div>
+          <div class="role-card">
+            <span class="mono-label">04 · Evidence Handover и PR</span>
+            <p style="margin: 0;">
+              Субагент обязан прогнать тесты, проектный скилл верификации (<code>pnpm check</code>, замер бандла и скорости) и приложить доказательства. Кнопка <code>Commit &amp; push (⌘⏎)</code> открывает Pull Request на GitHub с авто-описанием и ченджлогом.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout is-positive">
+          <strong>Проектный скилл верификации (Project-Specific Verification Skill):</strong>
+          на практике Яна Маршала создание такого скилла вместе с исправлением worktree-окружения, картой функций (<em>feature map</em>), офлайн-тестами без траты денег API и проверкой параллелизма заняло 3 часа (с участием 22 субагентов), но сразу выявило скрытые баги и сделало дальнейшую разработку UI на 15 000+ строк полностью автономной.
+        </div>
+
+        <span class="source-tag">Источники: T3 Code (t3.codes); заметки «Изолированные Worktrees», «Изоляция ИИ-агентов», «ИИ Инструменты Разработки».</span>
+
+        <div class="step-nav-footer">
+          <button type="button" class="btn btn-secondary" onclick="jumpToStep('step-2')">
+            <i data-lucide="arrow-left" width="16" height="16" aria-hidden="true"></i>
+            <span>Назад: Шаг 02</span>
+          </button>
+          <button type="button" class="btn btn-primary" onclick="jumpToStep('step-4')">
+            <span>Шаг 04: Платформа Decodo и Web Data API</span>
+            <i data-lucide="arrow-right" width="16" height="16" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== STEP 4 ==================== -->
+      <section id="step-4" class="step-section">
+        <div class="section-head">
+          <div>
+            <div class="step-badge-row">
+              <span class="step-badge">ШАГ 04</span>
+              <span class="mono-label">Живые данные для ИИ-агентов</span>
+            </div>
+            <h2 class="section-title"><strong>Decodo и Web Data API</strong>: скрапинг, прокси и MCP</h2>
+          </div>
+          <button type="button" class="btn btn-ghost btn-done" id="done-btn-step-4" onclick="toggleStepDone('step-4')">
+            <i data-lucide="check-circle" width="16" height="16" aria-hidden="true"></i>
+            <span>Отметить шаг</span>
+          </button>
+        </div>
+
+        <p>
+          <strong>Decodo</strong> (до апреля 2025 года известная как Smartproxy; официальный домен <code>decodo.com</code>) — платформа веб-инфраструктуры с сетью свыше <strong>125 миллионов IP-адресов</strong> в 195+ локациях (115M+ резидентских, 10M+ мобильных 3G/4G/LTE/5G, 500K+ дата-центр и статические ISP-прокси). В отличие от ручного парсинга, где крупные сайты вроде New York Times, Financial Times или Amazon мгновенно блокируют запросы и отдают пустой JS-рендер или тонну HTML-мусора, единый <strong>Web Data API</strong> берёт на себя обход антибот-защиты, рендеринг JavaScript и очистку данных в <strong>LLM-ready Markdown и JSON</strong>.
+        </p>
+
+        <!-- 4 Endpoints Interactive Explorer -->
+        <h3 class="sub-title">Четыре эндпоинта под единым API-ключом</h3>
+        <div class="diagram-box">
+          <div class="toggle-row" role="tablist" aria-label="Эндпоинты Decodo Web Data API">
+            <button type="button" class="toggle-pill is-active" id="ep-btn-scrape" onclick="setEndpointTab('scrape')">/scrape</button>
+            <button type="button" class="toggle-pill" id="ep-btn-search" onclick="setEndpointTab('search')">/search</button>
+            <button type="button" class="toggle-pill" id="ep-btn-map" onclick="setEndpointTab('map')">/map</button>
+            <button type="button" class="toggle-pill" id="ep-btn-crawl" onclick="setEndpointTab('crawl')">/crawl</button>
+            <button type="button" class="toggle-pill" id="ep-btn-template" onclick="setEndpointTab('template')">Target Templates (фикс Google)</button>
+          </div>
+          <div id="endpoint-detail" class="diagram-detail">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- 9-Step Research Marshall + Decodo Pipeline Simulator -->
+        <h3 class="sub-title">Симулятор 9-шагового пайплайна Research Marshall + Decodo</h3>
+        <p>
+          Пройдите по шагам реального конвейера, в котором разделены ответственность ИИ-модели (планирование, выбор по индексам, извлечение фактов, синтез отчёта), запросы Decodo и обычный детерминированный код без ИИ (бюджет и верификация цитат).
+        </p>
+
+        <div class="diagram-box">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+            <span class="mono-label" id="sim-step-counter">Шаг 1 из 9 · Пользовательский запрос</span>
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-xs);">
+              <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: var(--space-xs) var(--space-sm);" onclick="simPrev()">Назад</button>
+              <button type="button" class="btn btn-primary" style="min-height: 36px; padding: var(--space-xs) var(--space-sm);" onclick="simNext()">Следующий шаг</button>
+            </div>
+          </div>
+
+          <div class="sim-grid" id="sim-nodes-grid">
+            <!-- Populated by JS -->
+          </div>
+
+          <div id="sim-detail-box" class="diagram-detail">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Code Examples Tabs -->
+        <h3 class="sub-title">Интеграция в продакшен и локальную среду: код и MCP</h3>
+        <p>
+          Важное архитектурное правило: <strong>MCP-сервер</strong> (официально в реестре GitHub) и <strong>CLI</strong> предназначены для локальной отладки и работы кодинг-агента, а в продакшен-коде приложения используется типобезопасный <strong>TypeScript SDK</strong> (<code>@decodo/sdk</code>) или Python/HTTP-интеграция. Оплата списывается только за успешные запросы (от $0.15 за 1K; стартовый план даёт $5 кредитов и до 10K запросов бесплатно без карты).
+        </p>
+
+        <div class="code-panel">
+          <div class="code-toolbar">
+            <div class="code-tabs">
+              <button type="button" class="code-tab is-active" id="code-tab-ts" onclick="setCodeTab('ts')">TypeScript SDK + verifyQuote</button>
+              <button type="button" class="code-tab" id="code-tab-mcp" onclick="setCodeTab('mcp')">MCP Server &amp; CLI (локально)</button>
+              <button type="button" class="code-tab" id="code-tab-py" onclick="setCodeTab('py')">Python / RAG интеграция</button>
+            </div>
+            <button type="button" class="copy-btn" onclick="copyCodeBlock('decodo-code-pre', this)">
+              <i data-lucide="copy" width="14" height="14" aria-hidden="true"></i>
+              <span>Копировать</span>
+            </button>
+          </div>
+          <pre class="code-pre" id="decodo-code-pre"></pre>
+        </div>
+
+        <span class="source-tag">Источники: «Decodo - All-in-One Proxy &amp; Web Scraping Platform»; заметка «ИИ Инструменты Разработки»; YouTube Jan Marshal.</span>
+
+        <div class="step-nav-footer">
+          <button type="button" class="btn btn-secondary" onclick="jumpToStep('step-3')">
+            <i data-lucide="arrow-left" width="16" height="16" aria-hidden="true"></i>
+            <span>Назад: Шаг 03</span>
+          </button>
+          <button type="button" class="btn btn-primary" onclick="jumpToStep('step-5')">
+            <span>Шаг 05: Матрица доказательств и чек-лист</span>
+            <i data-lucide="arrow-right" width="16" height="16" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== STEP 5 ==================== -->
+      <section id="step-5" class="step-section">
+        <div class="section-head">
+          <div>
+            <div class="step-badge-row">
+              <span class="step-badge">ШАГ 05</span>
+              <span class="mono-label">Контроль качества и источники</span>
+            </div>
+            <h2 class="section-title"><strong>Матрица доказательств</strong> и чек-лист запуска</h2>
+          </div>
+          <button type="button" class="btn btn-ghost btn-done" id="done-btn-step-5" onclick="toggleStepDone('step-5')">
+            <i data-lucide="check-circle" width="16" height="16" aria-hidden="true"></i>
+            <span>Отметить шаг</span>
+          </button>
+        </div>
+
+        <p>
+          В отличие от «вайб-кодинга», ни один компонент в связке <strong>PRD + PStack + T3 Code + Decodo</strong> не принимается на веру. Ниже собрана единая матрица доказательств: какое именно подтверждение требуется на каждом уровне стека, и кто его проверяет.
+        </p>
+
+        <div class="toggle-row" role="group" aria-label="Фильтр матрицы доказательств">
+          <button type="button" class="toggle-pill is-active" id="mat-btn-all" onclick="filterMatrix('all')">Все уровни (6)</button>
+          <button type="button" class="toggle-pill" id="mat-btn-code" onclick="filterMatrix('code')">Код и типы</button>
+          <button type="button" class="toggle-pill" id="mat-btn-runtime" onclick="filterMatrix('runtime')">Рантайм и браузер</button>
+          <button type="button" class="toggle-pill" id="mat-btn-external" onclick="filterMatrix('external')">API и внешний аудит</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Слой проверки</th>
+                <th>Инструмент / скилл</th>
+                <th>Артефакт доказательства (Evidence)</th>
+                <th>Ответственный</th>
+              </tr>
+            </thead>
+            <tbody id="matrix-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="sub-title">Интерактивный чек-лист настройки среды перед стартом проекта</h3>
+        <p class="muted">
+          Отмеченные пункты сохраняются в пространстве ноутбука автоматически. Вы можете экспортировать итоговый отчёт или сбросить отметки.
+        </p>
+
+        <div class="layer-low" style="padding: 0;">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm); padding: var(--space-md); border-bottom: var(--rule); background: var(--surface-container);">
+            <span class="mono-label" id="checklist-summary">Выполнено: 0 из 8</span>
+            <div style="display: flex; gap: var(--space-sm);">
+              <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: var(--space-xs) var(--space-sm);" onclick="exportChecklist()">
+                <i data-lucide="download" width="14" height="14" aria-hidden="true"></i>
+                <span>Экспорт (.txt)</span>
+              </button>
+              <button type="button" class="btn btn-ghost" style="min-height: 36px; padding: var(--space-xs) var(--space-sm);" id="reset-checklist-btn" onclick="resetChecklist(this)">
+                Сбросить
+              </button>
+            </div>
+          </div>
+          <div id="checklist-container">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Grounded Sources -->
+        <div class="layer" style="margin-top: var(--space-xl);">
+          <span class="mono-label" style="margin-bottom: var(--space-sm);">Источники и атрибуция материалов блокнота</span>
+          <ul style="margin: 0; padding-left: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-xs);">
+            <li><strong>How Senior Engineers Actually Code with AI (Full Product Build)</strong> — видеоурок и транскрипт канала <em>Jan Marshal</em> (YouTube): архитектура Research Marshall, фазы сборки, ролевое делегирование моделей, кейс Decodo SDK и Google Target Template.</li>
+            <li><strong>plugins/pstack at main · cursor/plugins · GitHub</strong> — официальная документация и каталог плейбуков, функциональных скиллов, 24 принципов и субагентов (<code>poteto-agent</code>, <code>comment-sicko</code>) от Лорен Тан (<code>poteto</code>).</li>
+            <li><strong>T3 Code | The open-source control plane for coding agents</strong> (<code>t3.codes</code>) — обзор возможностей ADE-интерфейса, подключения подписок, Git-ветвления и PR-интеграции.</li>
+            <li><strong>Decodo — All-in-One Proxy &amp; Web Scraping Platform</strong> (<code>decodo.com</code>) — спецификации прокси-сети (125M+ IP, 195+ локаций), 4 эндпоинтов Web Data API, тарифов и AI-интеграций (MCP, CLI, SDK).</li>
+            <li><strong>Заметки пользователя в блокноте</strong> — «Автономия ИИ-кодинга», «Изоляция ИИ-агентов», «Изолированные Worktrees», «Плейбуки PStack», «Режим Poteto Mode», «ИИ Инструменты Разработки».</li>
+          </ul>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <api-shim></api-shim>
+
+  <script>
+    // ==================== STATE ====================
+    var appState = {
+      completedSteps: [],
+      checklistDone: [],
+      activeApproach: 'senior',
+      activeDocTab: 'prd',
+      activePhase: 1,
+      pstackMode: 'flow',
+      activeEndpoint: 'scrape',
+      simStep: 0,
+      activeCodeTab: 'ts',
+      activeMatrixFilter: 'all'
+    };
+
+    // ==================== DATA ====================
+    var approachesData = {
+      senior: {
+        title: `Контрактный пайплайн Senior-инженера (Research Marshall)`,
+        badge: `Результат: рабочие кнопки, проверяемые цитаты, персистентность в БД`,
+        badgeClass: `is-ok`,
+        points: [
+          `<strong>До первой строчки кода:</strong> описаны PRD.md, 4 примитива (живой веб, verifyQuote, бюджет 3 раунда × 8 страниц, видимые ошибки failed/skipped/dropped) и жёсткие границы (без auth/login).`,
+          `<strong>Точка правды:</strong> agents.md ссылается на PRD.md и techstack.md — агент решает рутинные вопросы автономно.`,
+          `<strong>Роли и фазы:</strong> Fable 5.2 (Lead), Opus 5.5 (Implementor), Sonnet/Haiku 5.5 (Researcher) работают в чистых сессиях: Фундамент → Бэкенд → Верификация → UI.`,
+          `<strong>Обязательное доказательство:</strong> код проходит тесты Vitest, проверку в ADE-браузере, реальный вызов Decodo и аудит в GitHub PR.`
+        ]
+      },
+      oneshot: {
+        title: `Наивный «One-Shot» промпт («Сделай мне Research Agent»)`,
+        badge: `Результат: AI-slop, выдуманные источники и деградация после 500K токенов`,
+        badgeClass: `is-err`,
+        points: [
+          `<strong>Отсутствие контракта:</strong> агент сам додумывает требования, добавляет ненужную авторизацию, роли и раздувает скоуп.`,
+          `<strong>Переполнение контекста:</strong> одна сессия быстро пересекает 500K+ токенов, где точность рассуждений падает экспоненциально.`,
+          `<strong>Галлюцинации вместо проверки:</strong> половина кнопок интерфейса не привязана к логике, а сноски в отчёте ссылаются на несуществующие цитаты.`,
+          `<strong>Слепота без браузера:</strong> агент отчитывается «всё готово», ни разу не открыв приложение и не проверив реальный вывод API.`
+        ]
+      }
+    };
+
+    var docSnippets = {
+      prd: `# Research Marshall — PRD.md (Single Source of Truth)
+
+## 1. Идея и выходной формат
+Пользователь задаёт один исследовательский вопрос -> система собирает живые данные
+из сети и формирует Markdown-отчёт, где каждое утверждение подкреплено цитатой.
+
+## 2. Четыре базовых примитива
+1. Live Web Data: никаких захардкоженных фактов и опоры на cutoff обучающих данных.
+2. Quote Verification: утверждение существует только если точная цитата найдена
+   на странице через детерминированную функцию verifyQuote().
+3. Hard Budget: максимум 3 раунда, до 8 страниц на раунд и 1 вызов /map.
+4. Visible Failures: состояния failed, skipped и dropped всегда видны пользователю.
+
+## 3. Жёсткие границы (Out of Scope)
+- Без аккаунтов, логина, ролей, MFA и авторизации.
+- Без полного краулинга целых доменов (/crawl запрещён).
+- Локальный запуск для одного пользователя с историей в SQLite (Prisma 7).`,
+
+      agents: `# agents.md — Инструкции для кодинг-агентов
+
+## Единый источник правды
+При любых вопросах по скоупу, терминологии (один термин = одна сущность)
+или пользовательским сценариям ВСЕГДА сверяйся с PRD.md.
+Не изобретай функции, которых нет в PRD.md.
+
+## Правила стека
+Следуй ограничениям, версиям пакетов и паттернам из techstack.md:
+- Next.js 16 (App Router + Cache Components), TypeScript 7, Biome 2.6.7
+- Decodo TypeScript SDK v3.0 + Zod + Vercel AI SDK + Streamdown v2.7.1
+
+## Верификация перед сдачей
+Задача не считается выполненной без запуска pnpm check, тестов Vitest,
+проверки в ADE-браузере и предоставления Evidence Handover.`,
+
+      prompt: `// Формула промпта Senior-инженера (без микроменеджмента)
+
+[1. ЦЕЛЬ (Goal)]
+Начинаем Фазу 2: бэкенд-пайплайн без UI. Нужно реализовать 9-шаговый
+исследовательский конвейер по приложенной схеме и PRD.md.
+
+[2. ОГРАНИЧЕНИЯ (Constraints)]
+- Прочитай PRD.md, agents.md и techstack.md до написания кода.
+- Не гадай о поведении Decodo: проверь эндпоинты через MCP-сервер и CLI,
+  а в коде приложения используй только официальный TypeScript SDK.
+- Используй единую терминологию из PRD.md.
+
+[3. КРИТЕРИИ ГОТОВНОСТИ (Definition of Done)]
+Задача готова, когда проходят все тесты Vitest, а один реальный поисковый
+прогон из терминала завершается Markdown-отчётом с цитатами и логом вызовов Decodo.`
+    };
+
+    var phaseDetails = {
+      1: {
+        title: `Фаза 1: Фундамент и бойлерплейт (0–180K токенов, точность ~98%)`,
+        text: `Создание PRD.md, agents.md, techstack.md, настройка Next.js 16, SQLite/Prisma 7, Tailwind CSS 4, Biome и сохранение ключей (.env для Anthropic и Decodo). На этом этапе Ян поймал галлюцинацию модели про «устаревший» Decodo SDK и переключил рендер отчётов на Streamdown.`
+      },
+      2: {
+        title: `Фаза 2: Бэкенд и исследовательский пайплайн (свежая сессия, ~220K токенов)`,
+        text: `Реализация логики без UI: AI SDK + Sonnet 5.5 + Decodo SDK (/search, /scrape, /map) + verifyQuote() + PR #2 на 5 000 строк. Именно здесь реальные тесты выявили редиректы google.com/goto, которые были решены переходом на Google Search Target Template.`
+      },
+      3: {
+        title: `Фаза 3: Усиление среды и проектный скилл верификации (3 часа, 22 субагента)`,
+        text: `Настройка изолированных worktrees (pnpm bootstrap, pnpm doctor), создание feature map, офлайн-прогона без траты кредитов API, проверок размера бандла и параллелизма. Скилл сразу нашёл и устранил скрытые дефекты в бэкенде.`
+      },
+      4: {
+        title: `Фаза 4: Фронтенд UI и дизайн-система (свежая сессия, 15 000+ строк)`,
+        text: `Вместо расплывчатого «сделай красиво» в промпт загружены 4 визуальных референса и команды компонентов. Итерации через Annotate в ADE-браузере, выбор ASCII-арта (San Francisco), генерация иконки через GPT-6 Astra и создание маршрута /design-system.`
+      }
+    };
+
+    var playbooksData = [
+      { name: `feature`, cat: `Разработка`, desc: `Проектирование структур данных и контрактов (/architect), реализация, автотесты и проверка через браузер.` },
+      { name: `bug-fix`, cat: `Отладка`, desc: `Обязательное воспроизведение бага до правки, поиск первопричины (fix-root-causes) и подтверждение тестом.` },
+      { name: `perf / hillclimb`, cat: `Оптимизация`, desc: `Трассировка узких мест CPU/памяти и научное улучшение одной метрики с замерами до/после.` },
+      { name: `prototype`, cat: `Исследование`, desc: `Быстрый одноразовый прототип для проверки архитектурной или визуальной гипотезы.` },
+      { name: `visual-parity`, cat: `Интерфейс`, desc: `Попиксельное доведение верстки до эталонного скриншота через непрерывные снимки браузера.` },
+      { name: `autopilot-full`, cat: `Автономия`, desc: `Полный цикл до мерджа: рой субагентов на каждый PR, повторная проверка при любых правках и зелёный CI.` },
+      { name: `babysit / shipping`, cat: `Релиз`, desc: `Доведение PR до готовности (конфликты, ревью-треды, CI) и последовательный безопасный мердж стека.` },
+      { name: `opening-a-pr`, cat: `Git-поток`, desc: `Автоматически вызывается в конце других плейбуков: формирует чистые коммиты, Conventional title и briefing-описание PR.` },
+      { name: `worktree-cleanup`, cat: `Гигиена`, desc: `Безопасная очистка диска от смердженных или заброшенных Git Worktrees и старых симуляторов.` },
+      { name: `investigation`, cat: `Аудит`, desc: `Read-only исследование кодовой базы: как устроен модуль X и почему он был написан именно так.` }
+    ];
+
+    var pstackDiagrams = {
+      flow: {
+        nodes: {
+          prompt: {
+            title: `1. Промпт: Цель + Ограничения + DoD`,
+            text: `Вы вводите задачу с префиксом /poteto-mode. Не нужно расписывать каждый шаг — достаточно задать цель, рамки из PRD.md и критерий готовности.`
+          },
+          router: {
+            title: `2. Роутер /poteto-mode`,
+            text: `Выбирает один из 23 плейбуков (например, feature или bug-fix), дословно копирует шаги в чек-лист To-Do и подключает принципы из памяти.`
+          },
+          skills: {
+            title: `3. Функциональные скиллы`,
+            text: `На нужных шагах автоматически срабатывают /architect (контракты до кода), /arena (параллельные варианты) и /interrogate (аудит diff).`
+          },
+          subagents: {
+            title: `4. Субагенты poteto-agent в Worktrees`,
+            text: `Тяжёлое чтение файлов и написание кода делегируется Opus 5.5 и Sonnet 5.5 в отдельных Git Worktrees, чтобы защитить контекст Lead-агента.`
+          },
+          handover: {
+            title: `5. Evidence Handover человеку`,
+            text: `Lead-агент (Fable 5.2) собирает дифф, логи тестов, скриншоты ADE-браузера и передаёт готовый PR инженеру-«шеф-повару».`
+          }
+        }
+      },
+      loop: {
+        nodes: {
+          change: {
+            title: `1. Точечное изменение (Small Scoped Change)`,
+            text: `Субагент-исполнитель вносит небольшую правку внутри своего изолированного Git Worktree при фиксированной цели задачи.`
+          },
+          verify: {
+            title: `2. Проектный скилл верификации`,
+            text: `Запускаются pnpm check, Vitest, feature map, замеры скорости и сценарии в встроенном ADE-браузере T3 Code.`
+          },
+          evidence: {
+            title: `3. Инспекция доказательств (Evidence)`,
+            text: `Анализируются реальные скриншоты UI, ответы базы данных и логи Decodo API — принцип prove-it-works запрещает верить компиляции на слово.`
+          },
+          decision: {
+            title: `4. Есть дефект? Авто-петля (Loop)`,
+            text: `При любой ошибке субагент не останавливается и не зовёт человека, а возвращается к шагу 1 и чинит первопричину до полного прохождения проверок.`
+          }
+        }
+      }
+    };
+
+    var endpointsData = {
+      scrape: {
+        title: `/scrape — Превращение любой страницы в чистый Markdown, JSON или HTML`,
+        badge: `LLM-ready вывод · Anti-Bot & JS-рендеринг`,
+        text: `Загружает целевой URL через пул 125M+ IP, рендерит JavaScript и удаляет навигацию, рекламу и cookie-баннеры. В Research Marshall используется для получения чистого Markdown, который сразу ложится в контекстное окно LLM и кэшируется в SQLite.`,
+        sample: `POST /v1/scrape -> { url: "example.com/article", format: "markdown", geo: "US" }\n// Ответ: очищенный Markdown (~70% меньше токенов по сравнению с сырым HTML)`
+      },
+      search: {
+        title: `/search — Живые органические результаты поиска в реальном времени`,
+        badge: `Google, Bing · Без рекламных блоков`,
+        text: `Выполняет поисковый запрос и возвращает структурированный массив organic (rank, link, title, description) без спонсируемого шума. Модель выбирает лучшие результаты по числовому индексу, экономя токены и сохраняя бюджет.`,
+        sample: `POST /v1/search -> { query: "MCP server architecture", engine: "google" }\n// Ответ: { organic: [{ rank: 1, title: "...", link: "...", description: "..." }] }`
+      },
+      map: {
+        title: `/map — Карта всех URL и подстраниц домена за один вызов`,
+        badge: `До ~150 000 URL за запрос · Sitemap + краулинг ссылок`,
+        text: `Незаменим, когда нужно найти конкретный раздел внутри одного сайта (например, узнать rate limits в документации самого Decodo). Возвращает список всех подстраниц, из которых модель выбирает нужные разделы.`,
+        sample: `POST /v1/map -> { url: "decodo.com" }\n// Ответ: { links: ["/lp/web-data-api", "/lp/web-data-api/scrape", ...] }`
+      },
+      crawl: {
+        title: `/crawl — Автономный сбор контента со всего сайта`,
+        badge: `До 10 000 страниц в одной задаче`,
+        text: `Автоматически переходит по внутренним ссылкам, рендерит JS и собирает многостраничные ресурсы без написания собственного краулера. В Research Marshall намеренно исключён в PRD.md ради жёсткого бюджета.`,
+        sample: `POST /v1/crawl -> { url: "example.com/docs", max_pages: 500, format: "markdown" }\n// Ответ: job_id -> пакет структурированных Markdown-документов`
+      },
+      template: {
+        title: `Кейс из практики: Google Search Target Template против редиректов`,
+        badge: `Решено в Фазе 2 · 6/6 успешных прогонов`,
+        text: `В 14 тестовых вызовах базового поиска 3/4 ссылок от Google приходили как проксированные редиректы google.com/goto с пустым original_link, из-за чего /scrape выдавал ошибку 400. Переключение на готовый шаблон Google Search (с AI Overview) в Decodo сразу дало прямые целевые URL в 6 из 6 тестов.`,
+        sample: `// Вместо обычного /search -> используем готовый target template:\ndecodo.scrape({ target: "google_search", query: "...", parse: true })\n// Возвращает чистые прямые URL, сниппеты и AI Overview.`
+      }
+    };
+
+    var simStepsData = [
+      {
+        short: `1. Вопрос`,
+        actor: `Пользователь`,
+        roleClass: `tag`,
+        title: `Вход: один исследовательский вопрос`,
+        desc: `Пользователь задаёт открытый или научный вопрос (например: «Какие лимиты запросов указаны в документации Decodo?»). Система фиксирует запуск в SQLite через Prisma 7.`
+      },
+      {
+        short: `2. Подвопросы`,
+        actor: `Модель (Sonnet 5.5)`,
+        roleClass: `tag is-warn`,
+        title: `Декомпозиция на 3–5 поисковых запросов`,
+        desc: `Модель разбивает сложную тему на 3–5 конкретных подвопросов и формулирует для каждого чистый поисковый запрос.`
+      },
+      {
+        short: `3. Поиск`,
+        actor: `Decodo (/search Template)`,
+        roleClass: `tag`,
+        title: `Сбор живых сниппетов без рекламы`,
+        desc: `Decodo через Google Search Target Template возвращает заголовки, описания и прямые URL страниц (ошибка google.com/goto полностью исключена).`
+      },
+      {
+        short: `4. Отбор`,
+        actor: `Модель + Код бюджета`,
+        roleClass: `tag is-warn`,
+        title: `Выбор по индексу и жёсткий лимит 8 страниц`,
+        desc: `Модель отвечает только номерами индексов (например, [3, 7, 12, 22]), а не длинными хрупкими URL. Обычный код обрезает выборку жёстким лимитом: не более 8 страниц за раунд.`
+      },
+      {
+        short: `5. Скрапинг`,
+        actor: `Decodo (/scrape)`,
+        roleClass: `tag`,
+        title: `Чтение Markdown и кэширование в SQLite`,
+        desc: `Decodo открывает выбранные страницы с авто-ротацией 125M+ IP, отдаёт LLM-ready Markdown и сохраняет его в локальный кэш SQLite, чтобы не платить за повторное чтение.`
+      },
+      {
+        short: `6. Карта сайта`,
+        actor: `Decodo (/map, опционально)`,
+        roleClass: `tag`,
+        title: `Обнаружение подстраниц конкретного домена`,
+        desc: `Если вопрос касается одного источника, включается /map (1 вызов в рамках бюджета): он выдаёт до 150K URL домена, и модель выбирает нужные разделы.`
+      },
+      {
+        short: `7. Факты`,
+        actor: `Модель (Sonnet 5.5)`,
+        roleClass: `tag is-warn`,
+        title: `Извлечение утверждений и точных цитат`,
+        desc: `Модель читает Markdown каждой страницы, выписывает факты и обязана скопировать дословное предложение-подтверждение прямо из текста страницы.`
+      },
+      {
+        short: `8. verifyQuote()`,
+        actor: `Обычный код (без ИИ)`,
+        roleClass: `tag is-ok`,
+        title: `Детерминированная проверка цитат и Gap Check`,
+        desc: `Обычный код ищет скопированную цитату на странице слово в слово. Если её нет — факт помечается как dropped. При нехватке данных запускается Раунд 2 или 3 (максимум 3 раунда).`
+      },
+      {
+        short: `9. Отчёт`,
+        actor: `Модель + Streamdown`,
+        roleClass: `tag is-ok`,
+        title: `Синтез Markdown-отчёта с кликабельными сносками`,
+        desc: `Финальный отчёт рендерится в Streamdown с нумерованными сносками [1], [2], [7] и полной прозрачностью: в боковой панели видны статусы failed, skipped и dropped.`
+      }
+    ];
+
+    var codeSnippets = {
+      ts: `import { DecodoClient } from '@decodo/sdk';
+import { z } from 'zod';
+
+// Инициализация официального TypeScript SDK v3.0 (проверено в продакшене)
+const decodo = new DecodoClient({
+  apiKey: process.env.DECODO_API_KEY!,
+});
+
+const QuestionSchema = z.object({
+  query: z.string().min(5).max(300),
+});
+
+export async function fetchLlmMarkdown(targetUrl: string) {
+  // /scrape с выдачей очищенного Markdown (без навигации, рекламы и баннеров)
+  const page = await decodo.scrape({
+    url: targetUrl,
+    format: 'markdown',
+  });
+  return page.data;
+}
+
+// Детерминированная проверка факта без участия ИИ (Research Marshall)
+export function verifyQuote(pageMarkdown: string, exactQuote: string): boolean {
+  const normalize = (s: string) => s.replace(/\\s+/g, ' ').trim().toLowerCase();
+  return normalize(pageMarkdown).includes(normalize(exactQuote));
+}`,
+
+      mcp: `# 1. Подключение официального MCP-сервера Decodo в Claude Code / T3 Code
+claude mcp add --transport http --scope user decodo api.decodo.com/v1/mcp
+# Далее в сессии выполнить /mcp и подтвердить OAuth/API-ключ локально
+
+# 2. Установка агентских скиллов Decodo (обучают ИИ точным параметрам API)
+# Выполняется через плагин-маркетплейс decodo-agent-skills (user scope)
+
+# 3. Локальный тест через Decodo CLI (быстрая проверка эндпоинтов без кода)
+decodo auth login
+decodo search --query "Web Data API rate limits" --engine google
+decodo scrape --url "example.com/docs" --format markdown
+decodo map --url "decodo.com"`,
+
+      py: `import os
+from decodo import DecodoClient  # Официальный Python SDK
+
+client = DecodoClient(api_key=os.environ["DECODO_API_KEY"])
+
+def gather_rag_context(topic: str, target_domain: str) -> list[dict]:
+    # Шаг 1: Поиск живых органических результатов
+    serp = client.search(query=topic, engine="google")
+    top_urls = [item["link"] for item in serp.get("organic", [])[:5]]
+
+    # Шаг 2: Очищенный Markdown для RAG-пайплайна и LLM
+    documents = []
+    for url in top_urls:
+        res = client.scrape(url=url, format="markdown")
+        documents.append({
+            "source": url,
+            "markdown": res.data,
+        })
+    return documents`
+    };
+
+    var matrixData = [
+      { layer: `Типизация и стиль`, cat: `code`, tool: `Biome 2.6.7 + TypeScript 7`, evidence: `0 ошибок pnpm lint и pnpm typecheck`, owner: `Implementor (Opus 5.5)` },
+      { layer: `Бизнес-логика`, cat: `code`, tool: `Vitest + verifyQuote()`, evidence: `100% зелёных unit-тестов и 0 галлюцинированных цитат`, owner: `Обычный код / Субагент` },
+      { layer: `Среда Worktree`, cat: `runtime`, tool: `pnpm bootstrap + pnpm doctor`, evidence: `Наличие .env.local, node_modules и валидных ключей 200 OK`, owner: `Session-start хук T3 Code` },
+      { layer: `Интерфейс и UX`, cat: `runtime`, tool: `ADE Built-in Browser + /visual-parity`, evidence: `Скриншоты всех маршрутов (desktop/mobile) и кликабельные сноски`, owner: `Lead (Fable 5.2) + Человек` },
+      { layer: `Живые веб-данные`, cat: `external`, tool: `Decodo MCP + CLI + SDK`, evidence: `Реальный прогон /search (Template), /scrape, /map и логи usage`, owner: `Researcher (Sonnet 5.5)` },
+      { layer: `Внешний аудит PR`, cat: `external`, tool: `Cursor BugBot + Devin Review`, evidence: `Проверка открытого Pull Request и устранение найденных регрессий`, owner: `PR-боты + Шеф-повар` }
+    ];
+
+    var checklistItems = [
+      `Составить PRD.md с 4 примитивами, единым словарём терминов и жёсткими ограничениями (без лишних модулей).`,
+      `Создать agents.md в корне проекта со ссылкой на PRD.md и techstack.md.`,
+      `Настроить ролевые модели в PStack (/setup-pstack): Lead (Fable 5.2), Implementor (Opus 5.5), Researcher (Sonnet/Haiku 5.5).`,
+      `Настроить worktree-бутстрап (pnpm bootstrap и pnpm doctor), чтобы субагенты получали .env.local и node_modules.`,
+      `Подключить Decodo MCP-сервер, CLI и агентские скиллы локально, а в коде приложения использовать TypeScript SDK.`,
+      `Добавить детерминированные проверки на границах (Zod + verifyQuote без участия LLM).`,
+      `Создать проектный скилл верификации (/create-verification-skill) с картой функций и офлайн-прогоном.`,
+      `Проверять код в T3 Code через встроенный ADE-браузер, Inline Diff Review и PR-ботов (BugBot / Devin).`
+    ];
+
+    // ==================== PERSISTENCE HELPERS ====================
+    function saveAppState() {
+      if (window.notebookAppApi && typeof window.notebookAppApi.setAppState === 'function') {
+        window.notebookAppApi.setAppState(appState).catch(function() {});
+      }
+    }
+
+    async function loadAppState() {
+      if (window.notebookAppApi && typeof window.notebookAppApi.getAppState === 'function') {
+        try {
+          var loaded = await window.notebookAppApi.getAppState();
+          if (loaded && typeof loaded === 'object') {
+            if (Array.isArray(loaded.completedSteps)) appState.completedSteps = loaded.completedSteps;
+            if (Array.isArray(loaded.checklistDone)) appState.checklistDone = loaded.checklistDone;
+            if (loaded.activeApproach) appState.activeApproach = loaded.activeApproach;
+            if (loaded.activeDocTab) appState.activeDocTab = loaded.activeDocTab;
+            if (typeof loaded.activePhase === 'number') appState.activePhase = loaded.activePhase;
+            if (loaded.pstackMode) appState.pstackMode = loaded.pstackMode;
+            if (loaded.activeEndpoint) appState.activeEndpoint = loaded.activeEndpoint;
+            if (typeof loaded.simStep === 'number') appState.simStep = loaded.simStep;
+            if (loaded.activeCodeTab) appState.activeCodeTab = loaded.activeCodeTab;
+            if (loaded.activeMatrixFilter) appState.activeMatrixFilter = loaded.activeMatrixFilter;
+          }
+        } catch (e) {}
+      }
+    }
+
+    // ==================== NAVIGATION & PROGRESS ====================
+    function jumpToStep(stepId) {
+      var target = document.getElementById(stepId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      setActiveToc(stepId);
+    }
+
+    function setActiveToc(stepId) {
+      var btns = document.querySelectorAll('.toc-btn');
+      btns.forEach(function(btn) {
+        btn.classList.remove('is-active');
+      });
+      var activeBtn = document.getElementById('toc-' + stepId);
+      if (activeBtn) activeBtn.classList.add('is-active');
+    }
+
+    function toggleStepDone(stepId) {
+      var idx = appState.completedSteps.indexOf(stepId);
+      if (idx === -1) {
+        appState.completedSteps.push(stepId);
+      } else {
+        appState.completedSteps.splice(idx, 1);
+      }
+      renderProgress();
+      saveAppState();
+    }
+
+    function renderProgress() {
+      var total = 5;
+      var count = appState.completedSteps.length;
+      var pct = Math.round((count / total) * 100);
+
+      var fill = document.getElementById('progress-fill');
+      var label = document.getElementById('progress-label');
+      if (fill) fill.style.width = pct + '%';
+      if (label) label.textContent = count + ' / ' + total + ' изучено';
+
+      for (var i = 1; i <= total; i++) {
+        var id = 'step-' + i;
+        var isDone = appState.completedSteps.indexOf(id) !== -1;
+        var tocBtn = document.getElementById('toc-' + id);
+        var doneBtn = document.getElementById('done-btn-' + id);
+        if (tocBtn) {
+          if (isDone) tocBtn.classList.add('is-done');
+          else tocBtn.classList.remove('is-done');
+        }
+        if (doneBtn) {
+          var span = doneBtn.querySelector('span');
+          if (isDone) {
+            doneBtn.classList.add('is-completed');
+            if (span) span.textContent = 'Изучено';
+          } else {
+            doneBtn.classList.remove('is-completed');
+            if (span) span.textContent = 'Отметить шаг';
+          }
+        }
+      }
+    }
+
+    // ==================== STEP 1 RENDERERS ====================
+    function setApproachView(key) {
+      appState.activeApproach = key;
+      var sBtn = document.getElementById('cmp-btn-senior');
+      var oBtn = document.getElementById('cmp-btn-oneshot');
+      if (sBtn) sBtn.classList.toggle('is-active', key === 'senior');
+      if (oBtn) oBtn.classList.toggle('is-active', key === 'oneshot');
+
+      var data = approachesData[key];
+      var panel = document.getElementById('approach-panel');
+      if (panel && data) {
+        var listHtml = data.points.map(function(p) {
+          return '<li style="margin-bottom: var(--space-xs);">' + p + '</li>';
+        }).join('');
+        panel.innerHTML =
+          '<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-sm);">' +
+            '<h4 class="sub-title" style="margin:0;">' + data.title + '</h4>' +
+            '<span class="tag ' + data.badgeClass + '">' + data.badge + '</span>' +
+          '</div>' +
+          '<ul style="margin:0; padding-left: var(--space-lg);">' + listHtml + '</ul>';
+      }
+      saveAppState();
+    }
+
+    function setDocTab(tabKey) {
+      appState.activeDocTab = tabKey;
+      ['prd', 'agents', 'prompt'].forEach(function(k) {
+        var b = document.getElementById('tab-' + k);
+        if (b) b.classList.toggle('is-active', k === tabKey);
+      });
+      var pre = document.getElementById('doc-code-pre');
+      if (pre && docSnippets[tabKey]) {
+        pre.textContent = docSnippets[tabKey];
+      }
+      saveAppState();
+    }
+
+    var contextChartInstance = null;
+    function getToken(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function renderContextChart() {
+      var canvas = document.getElementById('contextChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+
+      var primary = getToken('--primary');
+      var accent = getToken('--data-2');
+      var ink = getToken('--on-surface');
+      var muted = getToken('--on-surface-variant');
+      var gridCol = getToken('--outline-variant');
+
+      if (contextChartInstance) {
+        contextChartInstance.destroy();
+      }
+
+      contextChartInstance = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: ['0K', '100K', '200K', '300K', '400K', '500K', '700K', '900K', '1000K'],
+          datasets: [
+            {
+              label: 'Точность модели в одной длинной сессии (One-Shot)',
+              data: [99, 95, 91, 86, 80, 66, 42, 24, 15],
+              borderColor: primary,
+              backgroundColor: accent,
+              borderWidth: 2.5,
+              pointRadius: 4,
+              pointBackgroundColor: primary,
+              tension: 0.25
+            },
+            {
+              label: 'Точность при разбиении на фазы и чистые Worktrees',
+              data: [99, 97, 95, 96, 97, 96, 95, 96, 95],
+              borderColor: getToken('--positive'),
+              borderDash: [6, 4],
+              borderWidth: 2,
+              pointRadius: 3,
+              pointBackgroundColor: getToken('--positive'),
+              tension: 0.15
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              align: 'start',
+              labels: {
+                color: ink,
+                font: { family: "'IBM Plex Mono', monospace", size: 11 }
+              }
+            },
+            tooltip: {
+              backgroundColor: ink,
+              titleFont: { family: "'IBM Plex Mono', monospace" }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: gridCol },
+              ticks: { color: muted, font: { family: "'IBM Plex Mono', monospace", size: 11 } }
+            },
+            y: {
+              min: 0,
+              max: 105,
+              grid: { color: gridCol },
+              ticks: {
+                color: muted,
+                callback: function(v) { return v + '%'; },
+                font: { family: "'IBM Plex Mono', monospace", size: 11 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function selectPhase(num) {
+      appState.activePhase = num;
+      for (var i = 1; i <= 4; i++) {
+        var b = document.getElementById('phase-btn-' + i);
+        if (b) b.classList.toggle('is-active', i === num);
+      }
+      var box = document.getElementById('phase-detail');
+      var d = phaseDetails[num];
+      if (box && d) {
+        box.innerHTML =
+          '<h4 class="sub-title" style="margin:0 0 var(--space-xs);">' + d.title + '</h4>' +
+          '<p style="margin:0;">' + d.text + '</p>';
+      }
+      saveAppState();
+    }
+
+    // ==================== STEP 2 RENDERERS ====================
+    function setPstackDiagramMode(mode) {
+      appState.pstackMode = mode;
+      var fBtn = document.getElementById('pstack-view-flow');
+      var lBtn = document.getElementById('pstack-view-loop');
+      if (fBtn) fBtn.classList.toggle('is-active', mode === 'flow');
+      if (lBtn) lBtn.classList.toggle('is-active', mode === 'loop');
+
+      var wrap = document.getElementById('pstack-svg-container');
+      if (!wrap) return;
+
+      if (mode === 'flow') {
+        wrap.innerHTML =
+          '<svg viewBox="0 0 860 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Схема маршрутизации PStack">' +
+            '<defs><marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="var(--primary)"/></marker></defs>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'prompt\')">' +
+              '<rect x="10" y="35" width="140" height="86" fill="var(--background)" stroke="var(--primary)" stroke-width="2"/>' +
+              '<text x="22" y="60" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--primary)">01 · ВХОД</text>' +
+              '<text x="22" y="82" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">Goal + Constraints</text>' +
+              '<text x="22" y="102" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">+ Definition of Done</text>' +
+            '</g>' +
+            '<line x1="150" y1="78" x2="176" y2="78" stroke="var(--primary)" stroke-width="2" marker-end="url(#arr1)"/>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'router\')">' +
+              '<rect x="180" y="35" width="146" height="86" fill="var(--primary)" stroke="var(--primary)" stroke-width="2"/>' +
+              '<text x="192" y="60" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--data-2)">02 · РОУТЕР</text>' +
+              '<text x="192" y="82" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-primary)">/poteto-mode</text>' +
+              '<text x="192" y="102" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--primary-container)">Выбор 1 из 23 плейбуков</text>' +
+            '</g>' +
+            '<line x1="326" y1="78" x2="352" y2="78" stroke="var(--primary)" stroke-width="2" marker-end="url(#arr1)"/>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'skills\')">' +
+              '<rect x="356" y="35" width="148" height="86" fill="var(--surface-container)" stroke="var(--outline)" stroke-width="1.5"/>' +
+              '<text x="368" y="60" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--primary)">03 · СКИЛЛЫ</text>' +
+              '<text x="368" y="82" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">/architect, /arena</text>' +
+              '<text x="368" y="102" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">+ 24 принципа PStack</text>' +
+            '</g>' +
+            '<line x1="504" y1="78" x2="530" y2="78" stroke="var(--primary)" stroke-width="2" marker-end="url(#arr1)"/>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'subagents\')">' +
+              '<rect x="534" y="35" width="150" height="86" fill="var(--surface-container-high)" stroke="var(--primary)" stroke-width="1.5"/>' +
+              '<text x="546" y="60" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--primary)">04 · WORKTREES</text>' +
+              '<text x="546" y="82" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">poteto-agent × N</text>' +
+              '<text x="546" y="102" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">Opus / Sonnet в ветках</text>' +
+            '</g>' +
+            '<line x1="684" y1="78" x2="710" y2="78" stroke="var(--primary)" stroke-width="2" marker-end="url(#arr1)"/>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'handover\')">' +
+              '<rect x="714" y="35" width="136" height="86" fill="var(--positive-bg)" stroke="var(--positive)" stroke-width="2"/>' +
+              '<text x="726" y="60" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--positive)">05 · СДАЧА</text>' +
+              '<text x="726" y="82" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">Evidence PR</text>' +
+              '<text x="726" y="102" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">Скриншоты + Diff</text>' +
+            '</g>' +
+          '</svg>';
+        inspectPstackNode('router');
+      } else {
+        wrap.innerHTML =
+          '<svg viewBox="0 0 840 195" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Петля верификации PStack">' +
+            '<defs><marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="var(--primary)"/></marker></defs>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'change\')">' +
+              '<rect x="20" y="25" width="175" height="82" fill="var(--background)" stroke="var(--primary)" stroke-width="2"/>' +
+              '<text x="32" y="48" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--primary)">ШАГ A · КОД</text>' +
+              '<text x="32" y="70" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">Правка в Worktree</text>' +
+              '<text x="32" y="90" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">Малый скоуп под целью</text>' +
+            '</g>' +
+            '<line x1="195" y1="66" x2="225" y2="66" stroke="var(--primary)" stroke-width="2" marker-end="url(#arr2)"/>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'verify\')">' +
+              '<rect x="229" y="25" width="185" height="82" fill="var(--surface-container)" stroke="var(--primary)" stroke-width="2"/>' +
+              '<text x="241" y="48" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--primary)">ШАГ B · ПРОВЕРКА</text>' +
+              '<text x="241" y="70" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">Скилл верификации</text>' +
+              '<text x="241" y="90" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">ADE Browser + pnpm check</text>' +
+            '</g>' +
+            '<line x1="414" y1="66" x2="444" y2="66" stroke="var(--primary)" stroke-width="2" marker-end="url(#arr2)"/>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'evidence\')">' +
+              '<rect x="448" y="25" width="175" height="82" fill="var(--surface-container-high)" stroke="var(--outline)" stroke-width="1.5"/>' +
+              '<text x="460" y="48" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--primary)">ШАГ C · АНАЛИЗ</text>' +
+              '<text x="460" y="70" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">Разбор Evidence</text>' +
+              '<text x="460" y="90" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">Скриншоты, БД, логи</text>' +
+            '</g>' +
+            '<line x1="623" y1="66" x2="653" y2="66" stroke="var(--primary)" stroke-width="2" marker-end="url(#arr2)"/>' +
+            '<g class="svg-node" onclick="inspectPstackNode(\'decision\')">' +
+              '<rect x="657" y="25" width="165" height="82" fill="var(--warning-bg)" stroke="var(--warning)" stroke-width="2"/>' +
+              '<text x="669" y="48" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--warning)">ШЛЮЗ КАЧЕСТВА</text>' +
+              '<text x="669" y="70" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="var(--on-surface)">Ошибки или сбой?</text>' +
+              '<text x="669" y="90" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--on-surface-variant)">Да -> Loop · Нет -> PR</text>' +
+            '</g>' +
+            '<path d="M 739 107 L 739 156 L 107 156 L 107 112" fill="none" stroke="var(--error)" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr2)"/>' +
+            '<text x="330" y="147" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--error)">АВТО-ПЕТЛЯ (LOOP): ИСПРАВИТЬ ПЕРВОПРИЧИНУ И ПРОВЕРИТЬ СНОВА</text>' +
+          '</svg>';
+        inspectPstackNode('decision');
+      }
+      saveAppState();
+    }
+
+    function inspectPstackNode(nodeKey) {
+      var mode = appState.pstackMode;
+      var dict = pstackDiagrams[mode] ? pstackDiagrams[mode].nodes : null;
+      var info = dict && dict[nodeKey];
+      var box = document.getElementById('pstack-node-detail');
+      if (box && info) {
+        box.innerHTML =
+          '<h4 class="sub-title" style="margin:0 0 var(--space-xs);">' + info.title + '</h4>' +
+          '<p style="margin:0;">' + info.text + '</p>';
+      }
+    }
+
+    function filterPlaybooks(query) {
+      var q = (query || '').trim().toLowerCase();
+      var tbody = document.getElementById('playbook-tbody');
+      if (!tbody) return;
+      var filtered = playbooksData.filter(function(item) {
+        return item.name.toLowerCase().indexOf(q) !== -1 ||
+               item.cat.toLowerCase().indexOf(q) !== -1 ||
+               item.desc.toLowerCase().indexOf(q) !== -1;
+      });
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="muted">Совпадений не найдено. Очистите фильтр, чтобы увидеть все плейбуки.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(function(item) {
+        return '<tr>' +
+          '<td><code>' + item.name + '</code></td>' +
+          '<td><span class="tag">' + item.cat + '</span></td>' +
+          '<td>' + item.desc + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    // ==================== STEP 3 RENDERERS ====================
+    function setWorktreeMode(mode) {
+      var iBtn = document.getElementById('wt-btn-isolated');
+      var uBtn = document.getElementById('wt-btn-unisolated');
+      if (iBtn) iBtn.classList.toggle('is-active', mode === 'isolated');
+      if (uBtn) uBtn.classList.toggle('is-active', mode === 'unisolated');
+
+      var panel = document.getElementById('worktree-diagram-panel');
+      if (!panel) return;
+
+      if (mode === 'isolated') {
+        panel.innerHTML =
+          '<div class="card-grid" style="margin:0;">' +
+            '<div class="layer" style="border-left: 3px solid var(--positive);">' +
+              '<span class="mono-label">Worktree #1 (ветка feat/backend)</span>' +
+              '<p style="margin: var(--space-xs) 0;">Субагент <code>Opus 5.5</code>: <code>pnpm bootstrap</code> скопировал <code>.env.local</code> и слинковал <code>node_modules</code>.</p>' +
+              '<span class="tag is-ok">Vitest + Decodo 200 OK</span>' +
+            '</div>' +
+            '<div class="layer" style="border-left: 3px solid var(--positive);">' +
+              '<span class="mono-label">Worktree #2 (ветка feat/ui-polish)</span>' +
+              '<p style="margin: var(--space-xs) 0;">Субагент <code>Fable/Opus</code>: открыл ADE-браузер, прогнал <code>pnpm check</code>, снял скриншоты и сжал diff.</p>' +
+              '<span class="tag is-ok">Evidence Handover готов</span>' +
+            '</div>' +
+            '<div class="layer" style="border-left: 3px solid var(--primary);">' +
+              '<span class="mono-label">Основная ветка main</span>' +
+              '<p style="margin: var(--space-xs) 0;">Не затронута до ручного или бот-подтверждения PR. В 1 клик (⌘⏎) создаётся Pull Request на GitHub.</p>' +
+              '<span class="tag">0 конфликтов файлов</span>' +
+            '</div>' +
+          '</div>';
+      } else {
+        panel.innerHTML =
+          '<div class="callout is-error" style="margin:0;">' +
+            '<strong>Что ломается в новом Worktree без автоматического Bootstrap:</strong>' +
+            '<p style="margin: var(--space-xs) 0 0;">Как подтвердил опыт Яна Маршала, свежий Git Worktree создаётся без <code>node_modules</code>, без <code>.env.local</code> и без директории <code>.claude</code>. В результате субагент может генерировать код, но падает при любой попытке запустить тесты или обратиться к Decodo API — верификация блокируется. Решение: добавить скрипты <code>pnpm bootstrap</code>, <code>pnpm doctor</code> и session-start хуки на этапе 3.</p>' +
+          '</div>';
+      }
+    }
+
+    // ==================== STEP 4 RENDERERS ====================
+    function setEndpointTab(ep) {
+      appState.activeEndpoint = ep;
+      ['scrape', 'search', 'map', 'crawl', 'template'].forEach(function(k) {
+        var b = document.getElementById('ep-btn-' + k);
+        if (b) b.classList.toggle('is-active', k === ep);
+      });
+      var d = endpointsData[ep];
+      var box = document.getElementById('endpoint-detail');
+      if (box && d) {
+        box.innerHTML =
+          '<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-xs);">' +
+            '<h4 class="sub-title" style="margin:0;">' + d.title + '</h4>' +
+            '<span class="tag">' + d.badge + '</span>' +
+          '</div>' +
+          '<p style="margin:0 0 var(--space-sm);">' + d.text + '</p>' +
+          '<pre class="code-pre" style="background:var(--surface-code); padding:var(--space-sm) var(--space-md);">' + d.sample + '</pre>';
+      }
+      saveAppState();
+    }
+
+    function renderSim() {
+      var grid = document.getElementById('sim-nodes-grid');
+      var detail = document.getElementById('sim-detail-box');
+      var counter = document.getElementById('sim-step-counter');
+      var idx = appState.simStep;
+      if (idx < 0 || idx >= simStepsData.length) idx = 0;
+
+      if (counter) {
+        counter.textContent = 'Шаг ' + (idx + 1) + ' из ' + simStepsData.length + ' · ' + simStepsData[idx].actor;
+      }
+      if (grid) {
+        grid.innerHTML = simStepsData.map(function(s, i) {
+          var cls = 'sim-node';
+          if (i === idx) cls += ' is-current';
+          else if (i < idx) cls += ' is-visited';
+          return '<button type="button" class="' + cls + '" onclick="setSimStep(' + i + ')">' +
+            '<span class="mono-label">' + s.short + '</span>' +
+            '<span style="font-size:0.85rem; font-weight:600; color:var(--on-surface);">' + s.actor + '</span>' +
+          '</button>';
+        }).join('');
+      }
+      if (detail) {
+        var cur = simStepsData[idx];
+        detail.innerHTML =
+          '<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:var(--space-sm); margin-bottom:var(--space-xs);">' +
+            '<h4 class="sub-title" style="margin:0;">' + cur.title + '</h4>' +
+            '<span class="' + cur.roleClass + '">' + cur.actor + '</span>' +
+          '</div>' +
+          '<p style="margin:0;">' + cur.desc + '</p>';
+      }
+    }
+
+    function setSimStep(i) {
+      appState.simStep = i;
+      renderSim();
+      saveAppState();
+    }
+
+    function simNext() {
+      appState.simStep = (appState.simStep + 1) % simStepsData.length;
+      renderSim();
+      saveAppState();
+    }
+
+    function simPrev() {
+      appState.simStep = (appState.simStep - 1 + simStepsData.length) % simStepsData.length;
+      renderSim();
+      saveAppState();
+    }
+
+    function setCodeTab(tabKey) {
+      appState.activeCodeTab = tabKey;
+      ['ts', 'mcp', 'py'].forEach(function(k) {
+        var b = document.getElementById('code-tab-' + k);
+        if (b) b.classList.toggle('is-active', k === tabKey);
+      });
+      var pre = document.getElementById('decodo-code-pre');
+      if (pre && codeSnippets[tabKey]) {
+        pre.textContent = codeSnippets[tabKey];
+      }
+      saveAppState();
+    }
+
+    function copyCodeBlock(preId, btn) {
+      var pre = document.getElementById(preId);
+      if (!pre) return;
+      var text = pre.textContent || '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          flashCopyLabel(btn);
+        }).catch(function() {});
+      }
+    }
+
+    function flashCopyLabel(btn) {
+      if (!btn) return;
+      var span = btn.querySelector('span');
+      if (!span) return;
+      var old = span.textContent;
+      span.textContent = 'Скопировано';
+      setTimeout(function() {
+        span.textContent = old;
+      }, 1400);
+    }
+
+    // ==================== STEP 5 RENDERERS ====================
+    function filterMatrix(cat) {
+      appState.activeMatrixFilter = cat;
+      ['all', 'code', 'runtime', 'external'].forEach(function(k) {
+        var b = document.getElementById('mat-btn-' + k);
+        if (b) b.classList.toggle('is-active', k === cat);
+      });
+      var tbody = document.getElementById('matrix-tbody');
+      if (!tbody) return;
+      var rows = matrixData.filter(function(r) {
+        return cat === 'all' || r.cat === cat;
+      });
+      tbody.innerHTML = rows.map(function(r) {
+        return '<tr>' +
+          '<td><strong>' + r.layer + '</strong></td>' +
+          '<td><code>' + r.tool + '</code></td>' +
+          '<td>' + r.evidence + '</td>' +
+          '<td><span class="tag">' + r.owner + '</span></td>' +
+        '</tr>';
+      }).join('');
+      saveAppState();
+    }
+
+    function renderChecklist() {
+      var container = document.getElementById('checklist-container');
+      var summary = document.getElementById('checklist-summary');
+      if (!container) return;
+
+      container.innerHTML = checklistItems.map(function(text, idx) {
+        var checked = appState.checklistDone.indexOf(idx) !== -1;
+        return '<div class="checklist-row' + (checked ? ' is-checked' : '') + '">' +
+          '<input type="checkbox" id="chk-' + idx + '"' + (checked ? ' checked' : '') + ' onchange="toggleCheckItem(' + idx + ')">' +
+          '<label for="chk-' + idx + '">' + text + '</label>' +
+        '</div>';
+      }).join('');
+
+      if (summary) {
+        summary.textContent = 'Выполнено: ' + appState.checklistDone.length + ' из ' + checklistItems.length;
+      }
+    }
+
+    function toggleCheckItem(idx) {
+      var pos = appState.checklistDone.indexOf(idx);
+      if (pos === -1) appState.checklistDone.push(idx);
+      else appState.checklistDone.splice(pos, 1);
+      renderChecklist();
+      saveAppState();
+    }
+
+    function resetChecklist(btn) {
+      if (btn.dataset.armed !== 'true') {
+        btn.dataset.armed = 'true';
+        btn.textContent = 'Подтвердить сброс';
+        return;
+      }
+      btn.dataset.armed = 'false';
+      btn.textContent = 'Сбросить';
+      appState.checklistDone = [];
+      appState.completedSteps = [];
+      renderChecklist();
+      renderProgress();
+      saveAppState();
+    }
+
+    function exportChecklist() {
+      var lines = [
+        'ЧЕК-ЛИСТ ИНЖЕНЕРНОЙ АРХИТЕКТУРЫ ИИ-РАЗРАБОТКИ',
+        'Прогресс шагов: ' + appState.completedSteps.length + ' / 5',
+        '',
+        'Пункты готовности среды:'
+      ];
+      checklistItems.forEach(function(item, i) {
+        var mark = appState.checklistDone.indexOf(i) !== -1 ? '[x] ' : '[ ] ';
+        lines.push(mark + item);
+      });
+      var content = lines.join('\n');
+      if (window.notebookAppApi && typeof window.notebookAppApi.triggerFileDownload === 'function') {
+        window.notebookAppApi.triggerFileDownload({
+          content: content,
+          contentType: 'text/plain',
+          encoding: 'UTF-8',
+          filename: 'ai-engineering-checklist-ru.txt'
+        });
+      }
+    }
+
+    // ==================== INIT ====================
+    document.addEventListener('DOMContentLoaded', async function() {
+      await loadAppState();
+
+      setApproachView(appState.activeApproach);
+      setDocTab(appState.activeDocTab);
+      selectPhase(appState.activePhase);
+      renderContextChart();
+      setPstackDiagramMode(appState.pstackMode);
+      filterPlaybooks('');
+      setWorktreeMode('isolated');
+      setEndpointTab(appState.activeEndpoint);
+      renderSim();
+      setCodeTab(appState.activeCodeTab);
+      filterMatrix(appState.activeMatrixFilter);
+      renderChecklist();
+      renderProgress();
+
+      // Track active section while scrolling
+      var sections = document.querySelectorAll('.step-section');
+      if ('IntersectionObserver' in window) {
+        var obs = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              setActiveToc(entry.target.id);
+            }
+          });
+        }, { threshold: 0.25 });
+        sections.forEach(function(sec) { obs.observe(sec); });
+      }
+
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      }
+      if (window.notebookAppApi && typeof window.notebookAppApi.notifyAppReady === 'function') {
+        window.notebookAppApi.notifyAppReady();
+      }
+    });
+  </script>
+</body>
+</html>
