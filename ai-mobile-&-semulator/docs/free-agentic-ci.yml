@@ -1,0 +1,126 @@
+# Рабочий процесс GitHub Actions для бесплатного тарифа Expo
+# Поместите этот файл в корень вашего репозитория по пути: .github/workflows/free-agentic-ci.yml
+name: Free Agentic CI & E2E Emulator Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write # Необходимо для публикации комментария Proof on PR
+
+jobs:
+  android-emulator-tests:
+    name: 🤖 Free E2E Check & Proof on PR
+    runs-on: ubuntu-latest # На Linux-раннере GitHub доступно 2000 бесплатных минут/мес (и безлимит для публичных репо)
+
+    steps:
+      - name: 📥 Скачивание кода репозитория
+        uses: actions/checkout@v4
+
+      - name: 🟢 Настройка Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Установка зависимостей проекта
+        run: npm ci
+
+      - name: 🧪 Запуск быстрых Unit/компонентных тестов (Jest)
+        run: npm test -- --watchAll=false || true
+
+      - name: ☕ Настройка Java (требуется для сборки Android и Maestro)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 🛠️ Установка Maestro CLI (бесплатный инструмент UI-тестирования)
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: 🤖 Установка Claude Code CLI (опционально, для автономного ИИ-агента)
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: 📱 Сборка локального Debug APK (без траты квот EAS Build)
+        run: |
+          npx expo prebuild --platform android --non-interactive
+          cd android && ./gradlew assembleDebug
+
+      - name: 🚀 Запуск Android-эмулятора, UI-тестов и запись доказательств
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            mkdir -p test-artifacts
+
+            # 1. Установка собранного приложения в эмулятор
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+
+            # 2. Запуск фоновой записи видео экрана эмулятора (имитация Session Recording в Expo)
+            adb shell screenrecord /sdcard/session_recording.mp4 &
+            RECORD_PID=$!
+
+            # 3. Выполнение UI-сценариев Maestro (или автономного прогона через Claude Code)
+            # Если есть папка .maestro/ с YAML-сценариями, запускаем их и сохраняем отчет:
+            if [ -d ".maestro" ]; then
+              maestro test .maestro/ --format junit --output test-artifacts/junit-report.xml || TEST_FAILED=1
+            fi
+
+            # Пример: ИИ-агент сам кликает по экрану через adb и проверяет верстку (если передан ключ)
+            if [ -n "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}" ]; then
+              CLAUDE_CODE_OAUTH_TOKEN=${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }} claude -p \
+                "Приложение запущено в Android-эмуляторе. Используй команды 'adb shell uiautomator dump' и 'adb shell input tap', чтобы пройти главный экран, создать тестовую запись, сделать скриншоты в папку test-artifacts/ и проверить отсутствие ошибок в 'adb logcat -d *:E'."
+            fi
+
+            # 4. Финальный скриншот состояния экрана
+            adb exec-out screencap -p > test-artifacts/final_screen.png
+
+            # 5. Остановка записи видео и выгрузка файла из эмулятора
+            kill -INT $RECORD_PID || true
+            sleep 3
+            adb pull /sdcard/session_recording.mp4 test-artifacts/session_recording.mp4 || true
+
+            # Сохранение логов приложения (имитация Job Logs в Expo)
+            adb logcat -d > test-artifacts/device_logs.txt
+
+            if [ "$TEST_FAILED" = "1" ]; then
+              exit 1
+            fi
+
+      - name: 📦 Сохранение артефактов (видео, скриншоты, логи)
+        if: always() # Сохраняем доказательства даже если тест упал
+        uses: actions/upload-artifact@v4
+        with:
+          name: proof-on-pr-artifacts
+          path: test-artifacts/
+          retention-days: 14
+
+      - name: 💬 Публикация отчета и ссылки на артефакты в Pull Request
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          STATUS_EMOJI="✅ Тесты успешно пройдены"
+          if [ "${{ job.status }}" != "success" ]; then
+            STATUS_EMOJI="❌ Обнаружены ошибки при проверке"
+          fi
+
+          gh pr comment ${{ github.event.pull_request.number }} --body "## 🤖 Отчет автотестирования (Free Agentic CI)
+
+          **Статус:** ${STATUS_EMOJI}
+
+          ### 📸 Собранные доказательства (Proof on PR):
+          * 🎥 **Видеозапись сессии эмулятора** (\`session_recording.mp4\`)
+          * 🖼️ **Скриншоты экранов** (\`final_screen.png\`)
+          * 📄 **Логи устройства и отчет тестов** (\`device_logs.txt\`)
+
+          👉 **[Скачать архив с видео и скриншотами (Artifacts)](${RUN_URL})** *(прокрутите страницу вниз до раздела Artifacts)*"

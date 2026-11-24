@@ -1,0 +1,2424 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="dashboard">
+  <meta name="design-style" content="aurora">
+  <title>Expo Simulators и Agentic CI — Интерактивный дашборд</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@1.43.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+
+      /* 1. Aurora palette & surfaces */
+      --background: #0c1214;
+      --surface-container-low: #111a1e;
+      --surface-container: #152024;
+      --surface-container-high: #1c2a30;
+
+      /* Text */
+      --on-surface: #edf3f5;
+      --on-surface-variant: #94a8b0;
+
+      /* Borders */
+      --outline: #38515c;
+      --outline-variant: #213138;
+
+      /* Accents */
+      --primary: #63c7d6;
+      --on-primary: #081214;
+      --primary-container: #163840;
+      --on-primary-container: #c7f0f7;
+      --secondary: #5d7882;
+      --tertiary: #87d69b;
+      --error: #f27474;
+      --on-error: #1a0606;
+
+      /* Data series */
+      --data-1: #63c7d6;
+      --data-2: #87d69b;
+      --data-3: #e8b954;
+      --data-4: #f08c70;
+      --data-context: #415861;
+
+      /* Fonts (Cyrillic-capable families listed first per design foundation) */
+      --font-headline: 'Inter', 'Instrument Sans', sans-serif;
+      --font-body: 'Inter', 'Plus Jakarta Sans', sans-serif;
+      --font-label: 'JetBrains Mono', 'Geist Mono', monospace;
+
+      /* Shape */
+      --rounded: 0.5rem;
+      --rounded-lg: 0.75rem;
+      --rounded-full: 9999px;
+
+      /* Style effects */
+      --hairline: 1px solid var(--outline-variant);
+      --hairline-strong: 1px solid var(--outline);
+      --panel-gradient: linear-gradient(180deg, #162226 0%, #111a1e 100%);
+      --heading-tracking: -0.025em;
+      --label-tracking: 0.06em;
+      --sage-tint: color-mix(in srgb, var(--tertiary) 13%, transparent);
+      --cyan-tint: color-mix(in srgb, var(--primary) 13%, transparent);
+      --amber-tint: color-mix(in srgb, var(--data-3) 14%, transparent);
+      --error-tint: color-mix(in srgb, var(--error) 14%, transparent);
+      --primary-border-tint: color-mix(in srgb, var(--primary) 38%, transparent);
+      --sage-border-tint: color-mix(in srgb, var(--tertiary) 35%, transparent);
+      --amber-border-tint: color-mix(in srgb, var(--data-3) 38%, transparent);
+      --error-border-tint: color-mix(in srgb, var(--error) 38%, transparent);
+      --primary-hover: color-mix(in srgb, var(--primary) 85%, var(--on-surface));
+
+      /* 3. Shared tokens */
+      --positive: var(--tertiary);
+      --warning: var(--data-3);
+      --focus: var(--primary);
+
+      /* Type scale (Dashboard) */
+      --display-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.35rem);
+      --headline-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+      --subhead-size: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+      --body-size: clamp(0.9375rem, 0.9rem + 0.15vw, 1rem);
+      --label-size: 0.75rem;
+
+      /* Spacing scale (4pt base) */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+      --space-3xl: 6rem;
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+      --dur-long: 420ms;
+    }
+
+    /* Base reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: static !important; }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      color: inherit;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .page-grid {
+      display: grid;
+      gap: var(--space-xl);
+      padding: var(--space-lg);
+      max-width: 1280px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+    .page-grid * { min-width: 0; }
+
+    /* Typography helpers */
+    .title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--display-size);
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.12;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .section-title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--headline-size);
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.18;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .subhead {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--subhead-size);
+      letter-spacing: var(--heading-tracking);
+      line-height: 1.25;
+      color: var(--on-surface);
+      margin: 0;
+    }
+    .subtitle-lede {
+      color: var(--on-surface-variant);
+      max-width: 68ch;
+      margin: var(--space-sm) 0 0 0;
+      font-size: var(--body-size);
+    }
+    .data-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      letter-spacing: var(--label-tracking);
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      display: block;
+    }
+    .mono-inline {
+      font-family: var(--font-label);
+      font-size: 0.875em;
+      color: var(--on-primary-container);
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--space-xs);
+      padding: 0.08rem 0.35rem;
+    }
+
+    /* Aurora Panels & Wells */
+    .panel {
+      background: var(--panel-gradient);
+      border: var(--hairline);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+    }
+    .well {
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+    }
+
+    /* Header & Jump Nav */
+    .dashboard-header {
+      display: grid;
+      gap: var(--space-lg);
+      border-bottom: var(--hairline);
+      padding-bottom: var(--space-lg);
+    }
+    .header-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--space-md);
+    }
+    .quick-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      min-height: 44px;
+      padding: 0 var(--space-md);
+      border-radius: var(--rounded);
+      border: var(--hairline);
+      background: var(--surface-container-low);
+      color: var(--on-surface-variant);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+    }
+    .nav-pill:hover {
+      background: var(--surface-container-high);
+      border-color: var(--outline);
+      color: var(--on-surface);
+    }
+
+    /* KPI Row */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+      gap: var(--space-md);
+    }
+    .metric-card {
+      background: var(--panel-gradient);
+      border: var(--hairline);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-md) var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .metric-value {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: var(--heading-tracking);
+      color: var(--on-surface);
+      line-height: 1.15;
+    }
+    .metric-delta {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--tertiary);
+    }
+    .metric-delta.is-cyan { color: var(--primary); }
+    .metric-delta.is-amber { color: var(--warning); }
+
+    /* Status chips */
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: var(--sage-tint);
+      color: var(--tertiary);
+      border: 1px solid var(--sage-border-tint);
+      border-radius: var(--rounded);
+      padding: 2px var(--space-sm);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      white-space: nowrap;
+    }
+    .status-chip.is-cyan {
+      background: var(--cyan-tint);
+      color: var(--primary);
+      border-color: var(--primary-border-tint);
+    }
+    .status-chip.is-amber {
+      background: var(--amber-tint);
+      color: var(--warning);
+      border-color: var(--amber-border-tint);
+    }
+    .status-chip.is-error {
+      background: var(--error-tint);
+      color: var(--error);
+      border-color: var(--error-border-tint);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--rounded);
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: var(--body-size);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+    .btn-secondary {
+      background: transparent;
+      border: var(--hairline-strong);
+      color: var(--on-surface);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--surface-container-high);
+      border-color: var(--primary);
+    }
+    .btn-secondary.is-active {
+      background: var(--primary-container);
+      border-color: var(--primary);
+      color: var(--on-primary-container);
+    }
+    .btn-sm {
+      min-height: 44px;
+      padding: var(--space-xs) var(--space-md);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+    }
+
+    /* Section Header Layout */
+    .section-block {
+      display: grid;
+      gap: var(--space-lg);
+    }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: var(--space-md);
+    }
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      align-items: end;
+    }
+
+    /* QA Swarm Split Layout */
+    .swarm-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-md);
+    }
+    .matrix-row-label {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-sm);
+      padding-top: var(--space-sm);
+      border-top: var(--hairline);
+    }
+    .matrix-row-label:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .swarm-cell {
+      text-align: left;
+      background: var(--surface-container-low);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      min-height: 116px;
+      transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
+    }
+    .swarm-cell:hover {
+      background: var(--surface-container-high);
+      border-color: var(--outline);
+    }
+    .swarm-cell.is-selected {
+      background: var(--surface-container-high);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+    .swarm-cell-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .swarm-cell-title {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface);
+      font-weight: 600;
+      word-break: break-word;
+    }
+    .swarm-cell-meta {
+      font-size: 0.8125rem;
+      color: var(--on-surface-variant);
+    }
+
+    /* Proof on PR & Inspector */
+    .inspector-panel {
+      display: grid;
+      gap: var(--space-md);
+      container-type: inline-size;
+    }
+    .inspector-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-sm);
+    }
+    @container (max-width: 399px) {
+      .inspector-meta-grid { grid-template-columns: 1fr; }
+    }
+    .proof-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+    .proof-step-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: var(--space-sm);
+    }
+    .proof-step-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+    }
+    .before-after-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-sm);
+    }
+    .diff-card {
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-sm) var(--space-md);
+      display: grid;
+      gap: var(--space-xs);
+    }
+    .diff-card.is-before { border-color: var(--error-border-tint); }
+    .diff-card.is-after { border-color: var(--sage-border-tint); }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: var(--space-lg);
+    }
+    .chart-box {
+      position: relative;
+      min-height: 290px;
+      width: 100%;
+    }
+
+    /* Platform Comparison (iOS vs Android) */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+      gap: var(--space-lg);
+    }
+    .spec-list {
+      list-style: none;
+      margin: var(--space-md) 0 0 0;
+      padding: 0;
+      display: grid;
+      gap: var(--space-sm);
+    }
+    .spec-list li {
+      padding-top: var(--space-sm);
+      border-top: var(--hairline);
+      display: grid;
+      gap: 2px;
+    }
+    .spec-list li:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    /* Agentic Workflows & SVG Pipeline */
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .workflow-selector {
+      display: grid;
+      gap: var(--space-sm);
+    }
+    .workflow-btn {
+      text-align: left;
+      background: var(--surface-container-low);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      cursor: pointer;
+      display: grid;
+      gap: var(--space-xs);
+      min-height: 44px;
+      transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+    }
+    .workflow-btn:hover {
+      background: var(--surface-container-high);
+      border-color: var(--outline);
+    }
+    .workflow-btn.is-active {
+      background: var(--primary-container);
+      border-color: var(--primary);
+    }
+    .pipeline-svg-wrap {
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      overflow-x: auto;
+    }
+    .pipeline-svg {
+      width: 100%;
+      min-width: 520px;
+      height: auto;
+      display: block;
+    }
+
+    /* Configurator & Code Generator */
+    .config-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .field-group {
+      display: grid;
+      gap: var(--space-xs);
+    }
+    .field-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: var(--label-tracking);
+      color: var(--on-surface-variant);
+    }
+    .input-control, .select-control, .textarea-control {
+      width: 100%;
+      min-height: 44px;
+      background: var(--background);
+      border: var(--hairline-strong);
+      border-radius: var(--rounded);
+      padding: var(--space-sm) var(--space-md);
+      color: var(--on-surface);
+      font-size: var(--body-size);
+    }
+    .select-control {
+      padding-right: var(--space-xl);
+    }
+    .textarea-control {
+      min-height: 92px;
+      resize: vertical;
+    }
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+      gap: var(--space-sm);
+    }
+    .toggle-tile {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      cursor: pointer;
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+    }
+    .toggle-tile input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    .code-pre {
+      margin: 0;
+      padding: var(--space-md);
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      font-family: var(--font-label);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      color: var(--on-surface);
+      overflow-x: auto;
+      white-space: pre;
+      max-height: 440px;
+    }
+
+    /* CLI & Integrations Table */
+    .filter-toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 0.8fr);
+      gap: var(--space-md);
+      align-items: end;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      background: var(--background);
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .data-table th {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: var(--label-tracking);
+      color: var(--on-surface-variant);
+      background: var(--surface-container-low);
+      padding: var(--space-md);
+      border-bottom: var(--hairline);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: var(--space-md);
+      border-bottom: var(--hairline);
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table tbody tr:hover {
+      background: var(--surface-container-low);
+    }
+    .cmd-copy-btn {
+      min-height: 44px;
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--surface-container);
+      border: var(--hairline);
+      border-radius: var(--rounded);
+      color: var(--primary);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .cmd-copy-btn:hover {
+      background: var(--surface-container-high);
+      border-color: var(--primary);
+    }
+
+    /* Ecosystem Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: var(--space-lg);
+    }
+    .eco-card {
+      background: var(--panel-gradient);
+      border: var(--hairline);
+      border-radius: var(--rounded-lg);
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    /* Readiness Checklist */
+    .checklist-progress-bar {
+      width: 100%;
+      height: 10px;
+      background: var(--background);
+      border: var(--hairline);
+      border-radius: var(--rounded-full);
+      overflow: hidden;
+    }
+    .checklist-progress-fill {
+      height: 100%;
+      background: var(--tertiary);
+      width: 0%;
+      transition: width var(--dur-short) var(--ease-out);
+    }
+    .checklist-groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+      gap: var(--space-lg);
+    }
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      padding: var(--space-sm);
+      border-radius: var(--rounded);
+      border: var(--hairline);
+      background: var(--background);
+      cursor: pointer;
+      min-height: 44px;
+      transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
+    }
+    .check-item:hover {
+      border-color: var(--outline);
+      background: var(--surface-container-low);
+    }
+    .check-item.is-done {
+      border-color: var(--sage-border-tint);
+      background: var(--sage-tint);
+    }
+    .check-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--tertiary);
+      flex-shrink: 0;
+    }
+
+    /* Inline feedback banner */
+    .inline-notice {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--tertiary);
+      min-height: 1.25rem;
+    }
+
+    /* Footer */
+    .site-footer {
+      border-top: var(--hairline);
+      padding-top: var(--space-lg);
+      color: var(--on-surface-variant);
+      font-size: 0.875rem;
+      display: grid;
+      gap: var(--space-sm);
+    }
+
+    /* Responsive breakpoints */
+    @media (max-width: 960px) {
+      .swarm-layout,
+      .charts-grid,
+      .workflow-grid,
+      .config-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .page-grid {
+        padding: var(--space-md);
+        gap: var(--space-lg);
+      }
+      .matrix-grid {
+        grid-template-columns: 1fr;
+      }
+      .filter-toolbar {
+        grid-template-columns: 1fr;
+      }
+      .before-after-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-grid">
+
+    <!-- HEADER & KPI OVERVIEW -->
+    <header class="dashboard-header">
+      <div class="header-top-row">
+        <div>
+          <span class="data-label">Операционный центр облачного мобильного тестирования</span>
+          <h1 class="title">Expo Simulators и Agentic CI</h1>
+          <p class="subtitle-lede">
+            Интерактивный обзор и дашборд экосистемы облачных iOS-симуляторов и Android-эмуляторов:
+            оркестрация ИИ-агентов (Claude Code, Cursor, Codex), параллельный QA Swarm в GitHub Actions,
+            сбор доказательств Proof on PR, интеграция Appium, Maestro и Expo MCP Server.
+          </p>
+        </div>
+        <nav class="quick-nav" aria-label="Разделы дашборда">
+          <a class="nav-pill" href="#sec-swarm">QA Swarm</a>
+          <a class="nav-pill" href="#sec-workflows">Агентные циклы</a>
+          <a class="nav-pill" href="#sec-config">Генератор YAML</a>
+          <a class="nav-pill" href="#sec-ecosystem">MCP и Инструменты</a>
+          <a class="nav-pill" href="#sec-checklist">Чек-лист запуска</a>
+        </nav>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="metric-card">
+          <span class="data-label">Матрица QA Swarm</span>
+          <span class="metric-value" id="kpi-swarm-count">6 потоков</span>
+          <span class="metric-delta" id="kpi-swarm-status">2 платформы × 3 сценария (fail-fast: false)</span>
+        </div>
+        <div class="metric-card">
+          <span class="data-label">ИИ-агенты и фреймворки</span>
+          <span class="metric-value">8+ интеграций</span>
+          <span class="metric-delta is-cyan">Claude Code, Cursor, Codex, Grok + Appium/Maestro</span>
+        </div>
+        <div class="metric-card">
+          <span class="data-label">Доказательства Proof on PR</span>
+          <span class="metric-value">4 артефакта</span>
+          <span class="metric-delta">Скриншоты, видео, job logs, preview link</span>
+        </div>
+        <div class="metric-card">
+          <span class="data-label">Чек-лист готовности</span>
+          <span class="metric-value" id="kpi-checklist-score">0 / 11</span>
+          <span class="metric-delta is-amber" id="kpi-checklist-note">Отметьте шаги настройки перед Issue to PR</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1: QA SWARM MATRIX & PROOF ON PR INSPECTOR -->
+    <section id="sec-swarm" class="section-block" aria-labelledby="heading-swarm">
+      <div class="section-head">
+        <div>
+          <span class="data-label">Интерактивный мониторинг параллельной матрицы</span>
+          <h2 id="heading-swarm" class="section-title">Параллельный QA Swarm и инспектор Proof on PR</h2>
+        </div>
+        <div class="controls-row">
+          <button type="button" class="btn btn-secondary btn-sm is-active" id="filter-all" onclick="setSwarmFilter('all')">Все (6)</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="filter-ios" onclick="setSwarmFilter('ios')">iOS Simulator</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="filter-android" onclick="setSwarmFilter('android')">Android Emulator</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-toggle-bug" onclick="toggleBugSimulation()">Смоделировать сбой платежа</button>
+        </div>
+      </div>
+
+      <div class="swarm-layout">
+        <!-- Left: 2x3 Matrix -->
+        <div class="panel">
+          <div class="section-head" style="margin-bottom: var(--space-md);">
+            <div>
+              <span class="data-label">strategy.matrix · agentic-ci-v2.yml</span>
+              <h3 class="subhead">Изолированные облачные сессии по платформам и потокам</h3>
+            </div>
+            <span class="status-chip is-cyan" id="matrix-mode-badge">Режим: Успешный прогон PR</span>
+          </div>
+
+          <div class="matrix-grid" id="swarm-matrix-container">
+            <!-- Rendered by JS -->
+          </div>
+
+          <div class="well" style="margin-top: var(--space-md); display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-sm); align-items: center;">
+            <div>
+              <span class="data-label">Безопасность платёжных потоков (checkout-and-payments)</span>
+              <span style="font-size: 0.875rem; color: var(--on-surface-variant);">
+                Каждый симулятор работает в изолированном контейнере с <span class="mono-inline">session-scoped credentials</span>; после остановки контроллер и токены уничтожаются.
+              </span>
+            </div>
+            <span class="status-chip">fail-fast: false</span>
+          </div>
+        </div>
+
+        <!-- Right: Session Inspector & Proof on PR -->
+        <aside class="panel inspector-panel" id="session-inspector" aria-live="polite">
+          <!-- Rendered by JS -->
+        </aside>
+      </div>
+
+      <!-- Charts Row: Parallel Speedup & Architecture Comparison -->
+      <div class="charts-grid">
+        <div class="panel">
+          <div class="section-head" style="margin-bottom: var(--space-md);">
+            <div>
+              <span class="data-label">Сравнение архитектуры выполнения (условная модель на базе 6 потоков)</span>
+              <h3 class="subhead">Последовательный 1 агент vs Параллельный QA Swarm</h3>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="swarm-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="data-label">Архитектура облачных сред (iOS vs Android)</span>
+          <h3 class="subhead" style="margin-bottom: var(--space-md);">Симулятор iOS против Эмулятора Android</h3>
+          <div class="comparison-grid">
+            <div class="well">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+                <strong style="font-family: var(--font-headline);">iOS Simulator</strong>
+                <span class="status-chip is-cyan">--platform ios</span>
+              </div>
+              <ul class="spec-list">
+                <li>
+                  <span class="data-label">Принцип работы</span>
+                  <span>Моделирует программную среду и API iOS без эмуляции физического железа.</span>
+                </li>
+                <li>
+                  <span class="data-label">Преимущество облака</span>
+                  <span>Локально требует Mac и Xcode; в Expo Simulators запускается с Windows и Linux через браузер.</span>
+                </li>
+                <li>
+                  <span class="data-label">Выбор версий</span>
+                  <span>Определяется готовым облачным образом сессии (iPhone, iPad).</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="well">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+                <strong style="font-family: var(--font-headline);">Android Emulator</strong>
+                <span class="status-chip">--platform android</span>
+              </div>
+              <ul class="spec-list">
+                <li>
+                  <span class="data-label">Принцип работы</span>
+                  <span>Воспроизводит как программную часть, так и аппаратную архитектуру (CPU, память, железо).</span>
+                </li>
+                <li>
+                  <span class="data-label">Выбор систем</span>
+                  <span>Позволяет выбирать совместимые системные образы (<span class="mono-inline">system images</span>) для смартфонов, планшетов и складных устройств.</span>
+                </li>
+                <li>
+                  <span class="data-label">Единый контур</span>
+                  <span>Работает на той же облачной инфраструктуре, что и Expo Build, Submit и Workflows.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: AGENTIC WORKFLOWS EXPLORER -->
+    <section id="sec-workflows" class="section-block" aria-labelledby="heading-workflows">
+      <div class="section-head">
+        <div>
+          <span class="data-label">Замкнутый цикл автономной разработки</span>
+          <h2 id="heading-workflows" class="section-title">Четыре агентных сценария с Expo Simulators</h2>
+        </div>
+      </div>
+
+      <div class="workflow-grid">
+        <div class="workflow-selector" id="workflow-buttons">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="panel" id="workflow-detail-panel" style="display: grid; gap: var(--space-md);">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: INTERACTIVE CONFIGURATOR (GITHUB ACTIONS YAML & ISSUE TEMPLATE) -->
+    <section id="sec-config" class="section-block" aria-labelledby="heading-config">
+      <div class="section-head">
+        <div>
+          <span class="data-label">Конструктор файлов конфигурации из источников</span>
+          <h2 id="heading-config" class="section-title">Генератор GitHub Actions YAML и шаблона Issue to PR</h2>
+        </div>
+        <div class="controls-row">
+          <button type="button" class="btn btn-secondary btn-sm is-active" id="mode-btn-yaml" onclick="setGeneratorMode('yaml')">GitHub Actions (.yml)</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="mode-btn-issue" onclick="setGeneratorMode('issue')">Шаблон задачи (Issue to PR)</button>
+        </div>
+      </div>
+
+      <div class="config-layout">
+        <!-- Controls Panel -->
+        <div class="panel" id="config-controls-panel">
+          <!-- YAML Controls -->
+          <div id="controls-yaml" style="display: grid; gap: var(--space-md);">
+            <div class="field-group">
+              <label class="field-label" for="cfg-workflow-type">Профиль workflow</label>
+              <select class="select-control" id="cfg-workflow-type" onchange="updateGeneratedConfig()">
+                <option value="v2">QA Swarm Parallel Matrix (agentic-ci-v2.yml)</option>
+                <option value="v1">Базовый Agentic CI для iOS (agentic-ci.yml)</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <span class="field-label">Триггеры запуска (секция on)</span>
+              <div class="checkbox-grid">
+                <label class="toggle-tile">
+                  <input type="checkbox" id="trg-pr" checked onchange="updateGeneratedConfig()">
+                  <span>pull_request</span>
+                </label>
+                <label class="toggle-tile">
+                  <input type="checkbox" id="trg-push" onchange="updateGeneratedConfig()">
+                  <span>push (main)</span>
+                </label>
+                <label class="toggle-tile">
+                  <input type="checkbox" id="trg-cron" onchange="updateGeneratedConfig()">
+                  <span>schedule (cron)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field-group" id="matrix-options-block">
+              <span class="field-label">Платформы матрицы</span>
+              <div class="checkbox-grid">
+                <label class="toggle-tile">
+                  <input type="checkbox" id="plt-ios" checked onchange="updateGeneratedConfig()">
+                  <span>ios (iOS Simulator)</span>
+                </label>
+                <label class="toggle-tile">
+                  <input type="checkbox" id="plt-android" checked onchange="updateGeneratedConfig()">
+                  <span>android (Emulator)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field-group" id="flows-options-block">
+              <span class="field-label">Тестовые потоки (flow)</span>
+              <div class="checkbox-grid">
+                <label class="toggle-tile">
+                  <input type="checkbox" id="flw-auth" checked onchange="updateGeneratedConfig()">
+                  <span>auth-and-profile</span>
+                </label>
+                <label class="toggle-tile">
+                  <input type="checkbox" id="flw-nav" checked onchange="updateGeneratedConfig()">
+                  <span>main-navigation-and-search</span>
+                </label>
+                <label class="toggle-tile">
+                  <input type="checkbox" id="flw-pay" checked onchange="updateGeneratedConfig()">
+                  <span>checkout-and-payments</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <span class="field-label">Стратегия отказов и отладка</span>
+              <div class="checkbox-grid">
+                <label class="toggle-tile">
+                  <input type="checkbox" id="opt-failfast" checked onchange="updateGeneratedConfig()">
+                  <span>fail-fast: false</span>
+                </label>
+                <label class="toggle-tile">
+                  <input type="checkbox" id="opt-maestro" onchange="updateGeneratedConfig()">
+                  <span>agent-device (.maestro)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Issue Template Controls -->
+          <div id="controls-issue" style="display: none; gap: var(--space-md);">
+            <div class="field-group">
+              <label class="field-label" for="iss-title">Название задачи ([AI Task]: ...)</label>
+              <input class="input-control" type="text" id="iss-title" value="Экран оформления заказа и валидация оплаты" oninput="updateGeneratedConfig()">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="iss-goal">Цель реализации или исправления</label>
+              <textarea class="textarea-control" id="iss-goal" oninput="updateGeneratedConfig()">Реализовать форму оформления заказа с тестовой картой, проверить переходы по экранам и приложить скриншоты до и после проверки.</textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="iss-platform">Целевая платформа</label>
+              <select class="select-control" id="iss-platform" onchange="updateGeneratedConfig()">
+                <option value="ios_android">iOS и Android (iOS Simulator + Android Emulator)</option>
+                <option value="ios">Только iOS Simulator (--platform ios)</option>
+                <option value="android">Только Android Emulator (--platform android)</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="iss-stack">Стек проекта</label>
+              <input class="input-control" type="text" id="iss-stack" value="Expo SDK 58 / React Native (TypeScript), Expo Router" oninput="updateGeneratedConfig()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Preview Panel -->
+        <div class="panel" style="display: grid; gap: var(--space-md);">
+          <div class="section-head">
+            <div>
+              <span class="data-label" id="generated-file-path">.github/workflows/agentic-ci-v2.yml</span>
+              <h3 class="subhead" id="generated-file-title">Готовая конфигурация</h3>
+            </div>
+            <div class="controls-row">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="copyGeneratedCode()">Копировать код</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="downloadGeneratedCode()">Скачать файл</button>
+            </div>
+          </div>
+          <pre class="code-pre" id="generated-code-output"></pre>
+          <div class="inline-notice" id="config-feedback" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: ECOSYSTEM INTEGRATIONS (MCP, SKILLS, APPIUM, MAESTRO) & CLI CHEATSHEET -->
+    <section id="sec-ecosystem" class="section-block" aria-labelledby="heading-ecosystem">
+      <div class="section-head">
+        <div>
+          <span class="data-label">Инструменты, протоколы и команды терминала</span>
+          <h2 id="heading-ecosystem" class="section-title">Expo MCP Server, Skills, Appium и справочник EAS CLI</h2>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <article class="eco-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+            <span class="data-label">Model Context Protocol</span>
+            <span class="status-chip is-cyan">Expo MCP Server</span>
+          </div>
+          <h3 class="subhead">Прямой доступ агентов к документации SDK</h3>
+          <p style="margin: 0; color: var(--on-surface-variant);">
+            MCP-сервер (<span class="mono-inline">docs.expo.dev/mcp/</span>) работает в связке со структурированной Markdown-документацией для LLM: индекс <span class="mono-inline">llms.txt</span> или добавление суффикса <span class="mono-inline">.md</span> к любому URL справки. Агент запрашивает актуальные гайды Expo SDK напрямую без ручного поиска.
+          </p>
+        </article>
+
+        <article class="eco-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+            <span class="data-label">Навыки агентов</span>
+            <span class="status-chip">Expo Skills</span>
+          </div>
+          <h3 class="subhead">Модуль eas-simulator для ИИ</h3>
+          <p style="margin: 0; color: var(--on-surface-variant);">
+            Устанавливается командой <span class="mono-inline">npx @expo/skills install</span>. Обучает Claude Code, Cursor, Codex и другие терминальные агенты запускать симуляторы, устанавливать сборки, управлять UI и собирать скриншоты. Также помогает генерировать сайд-проекты: лендинг на Next.js, Privacy Policy и Terms of Service.
+          </p>
+        </article>
+
+        <article class="eco-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+            <span class="data-label">UI-автоматизация</span>
+            <span class="status-chip is-amber">Appium + Maestro</span>
+          </div>
+          <h3 class="subhead">Запуск существующих наборов автотестов</h3>
+          <p style="margin: 0; color: var(--on-surface-variant);">
+            Для каждой облачной сессии Expo автоматически выделяет отдельный <strong>Appium-сервер</strong> — достаточно направить тесты на его хост и порт. Декларативные YAML-сценарии <strong>Maestro</strong> (например, <span class="mono-inline">.maestro/checkout.yaml</span>) выполняются через инструмент <span class="mono-inline">agent-device</span>. Поддерживаются также <span class="mono-inline">Argent</span>, Flutter, Unity, Swift и Kotlin.
+          </p>
+        </article>
+      </div>
+
+      <!-- Searchable CLI & Integration Lookup -->
+      <div class="panel" style="display: grid; gap: var(--space-md);">
+        <div class="section-head">
+          <div>
+            <span class="data-label">Быстрый поиск по командам и компонентам</span>
+            <h3 class="subhead">Шпаргалка EAS CLI, агентов и секретов CI</h3>
+          </div>
+          <span class="inline-notice" id="cli-copy-feedback" aria-live="polite"></span>
+        </div>
+
+        <div class="filter-toolbar">
+          <div class="field-group">
+            <label class="field-label" for="cli-search">Поиск по команде, агенту или описанию</label>
+            <input class="input-control" type="text" id="cli-search" placeholder="Например: simulator, availability, appium, antigravity, token..." oninput="renderCliTable()">
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="cli-category">Категория</label>
+            <select class="select-control" id="cli-category" onchange="renderCliTable()">
+              <option value="all">Все категории</option>
+              <option value="cli">Команды EAS CLI</option>
+              <option value="agents">ИИ-агенты и фреймворки</option>
+              <option value="ci">Секреты и оптимизация сборок</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Категория</th>
+                <th>Команда / Инструмент</th>
+                <th>Назначение и особенности из источников</th>
+                <th>Действие</th>
+              </tr>
+            </thead>
+            <tbody id="cli-table-body">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: INTERACTIVE READINESS CHECKLIST (PERSISTED) -->
+    <section id="sec-checklist" class="section-block" aria-labelledby="heading-checklist">
+      <div class="section-head">
+        <div>
+          <span class="data-label">Состояние сохраняется автоматически</span>
+          <h2 id="heading-checklist" class="section-title">Чек-лист готовности перед первым циклом Issue to PR</h2>
+        </div>
+        <div class="controls-row">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-export-checklist" onclick="exportChecklistMarkdown()">Экспорт отчёта (.txt)</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-reset-checklist" onclick="handleResetChecklist(this)">Сбросить прогресс</button>
+        </div>
+      </div>
+
+      <div class="panel" style="display: grid; gap: var(--space-md);">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+          <span style="font-weight: 600;" id="checklist-summary-text">Выполнено 0 из 11 пунктов</span>
+          <span class="status-chip" id="checklist-badge">Подготовка окружения</span>
+        </div>
+        <div class="checklist-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0" id="checklist-progressbar">
+          <div class="checklist-progress-fill" id="checklist-progress-fill"></div>
+        </div>
+
+        <div class="checklist-groups" id="checklist-container">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div>
+        <strong>Источники материалов:</strong> документация Expo Simulators (<span class="mono-inline">expo.dev/services/simulators</span>), документация Expo AI, MCP Server и Skills (<span class="mono-inline">docs.expo.dev/mcp/</span>, <span class="mono-inline">docs.expo.dev/skills/</span>, <span class="mono-inline">docs.expo.dev/agentic-workflows/qa-swarm/</span>), конфигурации <span class="mono-inline">agentic-ci-workflow.yaml</span>, <span class="mono-inline">agentic-ci-workflow v2.yaml</span>, шаблон <span class="mono-inline">ai-agent-issue-template.md</span>, руководство Codesistency («How to Build iOS &amp; Android Apps with AI») и рабочие заметки по Agentic CI, Appium, Maestro, iOS/Android и чек-листу интеграции.
+      </div>
+    </footer>
+
+  </div>
+
+  <api-shim></api-shim>
+
+  <script>
+    // --- DATA MODELS (strictly grounded in sources, backtick template literals) ---
+    const SWARM_JOBS = [
+      {
+        id: `ios-auth`,
+        platform: `ios`,
+        platformLabel: `iOS Simulator`,
+        flow: `auth-and-profile`,
+        flowTitle: `Авторизация и профиль`,
+        agent: `Claude Code`,
+        tool: `eas-simulator skill`,
+        durationSec: 145,
+        device: `iPhone (Cloud iOS Image)`,
+        streamUrl: `expo.dev/sessions/sim-ios-auth-91a`,
+        appiumEndpoint: `wss://sim-ios-auth-91a.expo.internal:4723`,
+        steps: [
+          { label: `eas simulator:availability --json → available: true`, status: `ok` },
+          { label: `Запуск сессии npx eas-cli simulator --platform ios`, status: `ok` },
+          { label: `Вход в профиль и проверка Expo Router навигации`, status: `ok` },
+          { label: `Сбор скриншотов и сохранение job logs в Proof on PR`, status: `ok` }
+        ],
+        logs: `[00:02] eas simulator:availability --json -> {"available":true}\n[00:14] Provisioned isolated iOS Simulator container + Appium server :4723\n[00:48] Agent tapped "Sign In", verified profile persistence\n[02:25] Proof on PR: 4 screenshots + session recording attached`
+      },
+      {
+        id: `ios-nav`,
+        platform: `ios`,
+        platformLabel: `iOS Simulator`,
+        flow: `main-navigation-and-search`,
+        flowTitle: `Навигация и поиск`,
+        agent: `Cursor Agent`,
+        tool: `agent-device (.maestro/nav.yaml)`,
+        durationSec: 132,
+        device: `iPhone / iPad (Cloud iOS Image)`,
+        streamUrl: `expo.dev/sessions/sim-ios-nav-42b`,
+        appiumEndpoint: `wss://sim-ios-nav-42b.expo.internal:4723`,
+        steps: [
+          { label: `Установка сборки с быстрым репаком через fingerprinting`, status: `ok` },
+          { label: `Прогон Maestro YAML-потока через agent-device`, status: `ok` },
+          { label: `Проверка вкладок и поиска без наложений на status bar`, status: `ok` },
+          { label: `Генерация интерактивной Preview Link для ревьюера`, status: `ok` }
+        ],
+        logs: `[00:03] Native fingerprint matched -> repacked JS bundle (skipped full rebuild)\n[00:29] agent-device running .maestro/main-navigation.yaml\n[01:55] Verified search results & tab transitions on iOS\n[02:12] Video replay link exported to GitHub PR`
+      },
+      {
+        id: `ios-pay`,
+        platform: `ios`,
+        platformLabel: `iOS Simulator`,
+        flow: `checkout-and-payments`,
+        flowTitle: `Оформление заказа и платежи`,
+        agent: `Claude Code`,
+        tool: `eas-simulator + session-scoped credentials`,
+        durationSec: 178,
+        device: `iPhone (Isolated Payment Container)`,
+        streamUrl: `expo.dev/sessions/sim-ios-pay-77c`,
+        appiumEndpoint: `wss://sim-ios-pay-77c.expo.internal:4723`,
+        hasBugScenario: true,
+        steps: [
+          { label: `Инициализация контейнера с ограниченными по времени токенами`, status: `ok` },
+          { label: `Выбор тарифа и переход на экран ввода тестовой карты`, status: `ok` },
+          { label: `Валидация полей тестовой карты и подтверждение оплаты`, status: `ok` },
+          { label: `Проверка экрана успешной подписки и уничтожение токенов`, status: `ok` }
+        ],
+        bugSteps: [
+          { label: `Инициализация контейнера с session-scoped credentials`, status: `ok` },
+          { label: `Ввод тестовой карты на экране checkout`, status: `ok` },
+          { label: `Сбой: кнопка «Оплатить» перекрыта клавиатурой, таймаут подтверждения`, status: `error` },
+          { label: `Bug Triage: Агент перехватил job logs → добавил KeyboardAvoidingView → Re-test Passed`, status: `fixed` }
+        ],
+        logs: `[00:05] Isolated container mounted with session-scoped test gateway credentials\n[01:12] Filled test card form and triggered checkout transition\n[02:58] All payment assertions passed; container and controller destroyed`,
+        bugLogs: `[00:05] Isolated container mounted with session-scoped credentials\n[01:18] ERROR: Submit button obscured on small viewport; payment assertion failed\n[01:40] Bug Triage loop triggered: captured Before screenshot & logs\n[02:35] Agent patched CheckoutScreen.tsx -> re-ran iOS simulator -> After screenshot PASSED`
+      },
+      {
+        id: `android-auth`,
+        platform: `android`,
+        platformLabel: `Android Emulator`,
+        flow: `auth-and-profile`,
+        flowTitle: `Авторизация и профиль`,
+        agent: `Codex`,
+        tool: `Appium test suite`,
+        durationSec: 164,
+        device: `Android System Image (Pixel / Foldable)`,
+        streamUrl: `expo.dev/sessions/sim-and-auth-19d`,
+        appiumEndpoint: `wss://sim-and-auth-19d.expo.internal:4723`,
+        steps: [
+          { label: `Выбор совместимого системного образа (system image)`, status: `ok` },
+          { label: `Подключение Appium-набора к выделенному серверу сессии`, status: `ok` },
+          { label: `Тест входа и сохранения профиля на аппаратной эмуляции`, status: `ok` },
+          { label: `Выгрузка видеозаписи и скриншотов в единый отчёт Swarm`, status: `ok` }
+        ],
+        logs: `[00:08] Android Emulator booted compatible system image\n[00:22] Appium server provisioned at host:4723, test suite connected\n[02:44] Auth & Profile suite passed across Android emulator`
+      },
+      {
+        id: `android-nav`,
+        platform: `android`,
+        platformLabel: `Android Emulator`,
+        flow: `main-navigation-and-search`,
+        flowTitle: `Навигация и поиск`,
+        agent: `Claude Code`,
+        tool: `eas-simulator skill`,
+        durationSec: 151,
+        device: `Android Tablet / Phone Image`,
+        streamUrl: `expo.dev/sessions/sim-and-nav-55e`,
+        appiumEndpoint: `wss://sim-and-nav-55e.expo.internal:4723`,
+        steps: [
+          { label: `Запуск облачного эмулятора --platform android`, status: `ok` },
+          { label: `Навигация по экранам и тестирование аппаратной кнопки «Назад»`, status: `ok` },
+          { label: `Проверка поиска и фильтрации списков`, status: `ok` },
+          { label: `Сохранение артефактов в Proof on PR`, status: `ok` }
+        ],
+        logs: `[00:06] Android Emulator stream started\n[01:09] Tested search filter & hardware back-navigation\n[02:31] Screenshots and job logs archived`
+      },
+      {
+        id: `android-pay`,
+        platform: `android`,
+        platformLabel: `Android Emulator`,
+        flow: `checkout-and-payments`,
+        flowTitle: `Оформление заказа и платежи`,
+        agent: `Grok / CLI Agent`,
+        tool: `agent-device (.maestro/checkout.yaml)`,
+        durationSec: 186,
+        device: `Android Isolated Payment Container`,
+        streamUrl: `expo.dev/sessions/sim-and-pay-83f`,
+        appiumEndpoint: `wss://sim-and-pay-83f.expo.internal:4723`,
+        steps: [
+          { label: `Изолированный контейнер с session-scoped credentials`, status: `ok` },
+          { label: `Запуск .maestro/checkout.yaml через agent-device`, status: `ok` },
+          { label: `Обработка ошибки неверного CVC и повторная успешная оплата`, status: `ok` },
+          { label: `Завершение сессии и публикация отчёта в PR`, status: `ok` }
+        ],
+        logs: `[00:07] Session-scoped credentials injected into isolated Android container\n[01:33] Validated invalid-card error state + successful retry flow\n[03:06] Checkout flow passed; session closed`
+      }
+    ];
+
+    const WORKFLOWS = [
+      {
+        id: `agentic-ci`,
+        title: `Agentic CI`,
+        tag: `PR Check`,
+        summary: `Автоматическая проверка каждого Pull Request до слияния веток с публикацией Proof on PR и автоисправлением сбоев.`,
+        trigger: `GitHub Actions: pull_request (opened, synchronize)`,
+        steps: [
+          `Триггер PR запускает ubuntu-latest раннер и устанавливает eas-cli + @expo/skills.`,
+          `Проверяется доступность симуляторов: eas simulator:availability --json.`,
+          `С помощью EXPO_TOKEN и CLAUDE_CODE_OAUTH_TOKEN агент запускает облачный симулятор и проходит сценарии.`,
+          `Скриншоты шагов, видеозапись и логи прикрепляются в Pull Request (Proof on PR).`
+        ],
+        svgNodes: [
+          { label: `Pull Request`, sub: `opened / sync` },
+          { label: `GitHub Actions`, sub: `EAS CLI + Skills` },
+          { label: `Expo Simulator`, sub: `iOS / Android` },
+          { label: `Proof on PR`, sub: `Видео + Скрины` }
+        ]
+      },
+      {
+        id: `qa-swarm`,
+        title: `QA Swarm`,
+        tag: `Параллельно`,
+        summary: `Одновременный запуск нескольких ИИ-агентов в изолированных симуляторах через matrix strategy для быстрой проверки всего приложения.`,
+        trigger: `PR, push в main или ночной schedule (cron)`,
+        steps: [
+          `Матрица распределяет 2 платформы (ios, android) × 3 потока (auth, nav, checkout-and-payments).`,
+          `fail-fast: false гарантирует, что сбой одного потока не отменит сбор доказательств в остальных.`,
+          `Критические платежи тестируются в изолированных контейнерах с session-scoped credentials.`,
+          `По завершении формируется общий отчёт с Replay Links и логами для всех устройств.`
+        ],
+        svgNodes: [
+          { label: `Matrix Strategy`, sub: `fail-fast: false` },
+          { label: `6 Агентов`, sub: `Изолированно` },
+          { label: `Сценарии + Оплата`, sub: `Maestro / Appium` },
+          { label: `Единый отчёт`, sub: `Replay + Logs` }
+        ]
+      },
+      {
+        id: `issue-to-pr`,
+        title: `Issue to PR`,
+        tag: `Фича с нуля`,
+        summary: `Превращение текстовой идеи или GitHub Issue в готовый код, проверенный на облачном устройстве и оформленный в Pull Request.`,
+        trigger: `Текстовое описание фичи или шаблон ai-agent-issue-template.md`,
+        steps: [
+          `Агент получает задачу, стек (Expo SDK 58, TypeScript, Expo Router) и обращается к Expo MCP Server (llms.txt).`,
+          `Пишет или обновляет код приложения (включая лендинг на Next.js, Privacy Policy и Terms of Service при необходимости).`,
+          `Использует навык eas-simulator: запускает облачный симулятор и сам тестирует кнопки и экраны.`,
+          `Открывает Pull Request с описанием правок, скриншотами, видеозаписью и Preview Link.`
+        ],
+        svgNodes: [
+          { label: `GitHub Issue`, sub: `Промпт / Стек` },
+          { label: `MCP + llms.txt`, sub: `Код агента` },
+          { label: `Cloud Simulator`, sub: `UI-проверка` },
+          { label: `Готовый PR`, sub: `Proof + Preview` }
+        ]
+      },
+      {
+        id: `bug-triage`,
+        title: `Bug Triage`,
+        tag: `До / После`,
+        summary: `Автономное воспроизведение бага от тестера на облачном симуляторе, исправление кода и подтверждение результата сравнением «До» и «После».`,
+        trigger: `Отчёт тестера или падение проверки в Agentic CI`,
+        steps: [
+          `Агент перехватывает отчёт тестера или job logs упавшей сессии.`,
+          `Воспроизводит баг в облачном Expo Simulator и фиксирует скриншот состояния «До».`,
+          `Вносит исправление в исходный код и повторно проверяет сценарий на симуляторе.`,
+          `Открывает PR с доказательством «До» и «После», видеозаписью и логами.`
+        ],
+        svgNodes: [
+          { label: `Баг-репорт`, sub: `Логи / Фидбек` },
+          { label: `Воспроизведение`, sub: `Скриншот «До»` },
+          { label: `Патч кода`, sub: `Повторный тест` },
+          { label: `PR с фиксацией`, sub: `До и После` }
+        ]
+      }
+    ];
+
+    const CLI_ITEMS = [
+      {
+        cat: `cli`,
+        catLabel: `EAS CLI`,
+        name: `eas simulator:availability --json`,
+        desc: `Проверяет доступность сервиса Expo Simulators для вашего аккаунта перед запуском CI или локальной сессии (ожидается "available": true).`
+      },
+      {
+        cat: `cli`,
+        catLabel: `EAS CLI`,
+        name: `eas simulator --platform ios`,
+        desc: `Создаёт облачную сессию iOS-симулятора (работает с Windows, Linux и Mac) и возвращает веб-ссылку Stream / Preview Link.`
+      },
+      {
+        cat: `cli`,
+        catLabel: `EAS CLI`,
+        name: `eas simulator --platform android`,
+        desc: `Запускает облачный Android-эмулятор с выбором совместимого системного образа (system image) и выдаёт ссылку для просмотра в браузере.`
+      },
+      {
+        cat: `cli`,
+        catLabel: `EAS CLI`,
+        name: `npx @expo/skills install`,
+        desc: `Устанавливает официальный пакет Expo Skills (включая навык eas-simulator), обучающий агентов управлять облачными устройствами.`
+      },
+      {
+        cat: `cli`,
+        catLabel: `EAS CLI`,
+        name: `eas login && eas whoami && eas init`,
+        desc: `Авторизация в терминале, проверка текущего аккаунта Expo и привязка проекта к Expo Dashboard перед началом работы.`
+      },
+      {
+        cat: `agents`,
+        catLabel: `ИИ-агенты`,
+        name: `Claude Code / Cursor / Codex / Grok`,
+        desc: `Официально поддерживаемые агенты для автономной разработки, UI-тестирования, Issue to PR и Bug Triage. Поддерживается любой агент, умеющий выполнять shell-команды (включая Antigravity при наличии доступа к терминалу).`
+      },
+      {
+        cat: `agents`,
+        catLabel: `Тестирование`,
+        name: `Appium (Provisioned Server)`,
+        desc: `При старте облачной сессии Expo автоматически выделяет отдельный Appium-сервер. Направьте существующий Appium test suite на хост и порт этой сессии.`
+      },
+      {
+        cat: `agents`,
+        catLabel: `Тестирование`,
+        name: `Maestro + agent-device (.maestro/*.yaml)`,
+        desc: `Запуск поддерживаемого подмножества декларативных YAML-тестов Maestro через инструмент agent-device в выделенном потоке QA Swarm.`
+      },
+      {
+        cat: `agents`,
+        catLabel: `Документация LLM`,
+        name: `Expo MCP Server + llms.txt / .md`,
+        desc: `Прямой доступ ИИ-агентов к контексту проекта и актуальным спецификациям SDK через MCP (docs.expo.dev/mcp/) и Markdown-формат документации.`
+      },
+      {
+        cat: `ci`,
+        catLabel: `Секреты CI`,
+        name: `EXPO_TOKEN & CLAUDE_CODE_OAUTH_TOKEN`,
+        desc: `Обязательные секреты в GitHub Actions / Expo Environment Variables. Для получения OAuth-токена Claude используется команда setup-token.`
+      },
+      {
+        cat: `ci`,
+        catLabel: `Оптимизация`,
+        name: `Fingerprinting & Fast Refresh`,
+        desc: `Expo Workflows использует fingerprinting для переупаковки JS поверх существующей нативной сборки (пропуск полной пересборки); в dev-режиме работает Metro Fast Refresh.`
+      },
+      {
+        cat: `ci`,
+        catLabel: `Отладка`,
+        name: `Stream / Preview Link (Веб-портал сессии)`,
+        desc: `Отдельная CLI-команда для стрима логов не требуется: веб-ссылка сессии позволяет смотреть трансляцию, скачивать job logs, видео и скриншоты.`
+      }
+    ];
+
+    const CHECKLIST_GROUPS = [
+      {
+        id: `auth`,
+        title: `1. Авторизация и инфраструктура Expo`,
+        items: [
+          { id: `chk-1`, text: `Вход в аккаунт Expo через eas login; команда eas whoami возвращает верную учётную запись.` },
+          { id: `chk-2`, text: `Проект инициализирован и привязан к сервисам Expo командой eas init.` },
+          { id: `chk-3`, text: `Команда eas simulator:availability --json возвращает "available": true.` }
+        ]
+      },
+      {
+        id: `skills`,
+        title: `2. Настройка Expo Skills и MCP Server`,
+        items: [
+          { id: `chk-4`, text: `Набор навыков установлен через npx @expo/skills install (включая eas-simulator).` },
+          { id: `chk-5`, text: `Агент подключён к Expo MCP Server (docs.expo.dev/mcp/) и индексу документации llms.txt.` },
+          { id: `chk-6`, text: `Заданы переменные окружения / секреты EXPO_TOKEN и OAuth-токен агента (CLAUDE_CODE_OAUTH_TOKEN).` }
+        ]
+      },
+      {
+        id: `repo`,
+        title: `3. Связь с репозиторием и Agentic CI`,
+        items: [
+          { id: `chk-7`, text: `Репозиторий GitHub связан с проектом в Expo Dashboard.` },
+          { id: `chk-8`, text: `В репозиторий добавлен файл конфигурации .github/workflows/agentic-ci.yml (или v2 для QA Swarm).` }
+        ]
+      },
+      {
+        id: `loop`,
+        title: `4. Проверка цикла «Issue to PR»`,
+        items: [
+          { id: `chk-9`, text: `Сформулирована чёткая задача (шаблон ai-agent-issue-template.md или GitHub Issue).` },
+          { id: `chk-10`, text: `Агент автономно запускает симулятор (eas simulator --platform ios/android) и проходит UI.` },
+          { id: `chk-11`, text: `Агент формирует Proof on PR: прикрепляет видеозапись сессии, скриншоты и Preview Link.` }
+        ]
+      }
+    ];
+
+    // --- STATE ---
+    let state = {
+      swarmFilter: `all`,
+      selectedJobId: `ios-pay`,
+      bugMode: false,
+      activeProofTab: `steps`,
+      activeWorkflowId: `qa-swarm`,
+      generatorMode: `yaml`,
+      checkedItems: {}
+    };
+
+    let swarmChart = null;
+
+    // --- HELPER: Read CSS Variable safely ---
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    // --- PERSISTENCE ---
+    async function saveAppState() {
+      if (window.notebookAppApi && typeof window.notebookAppApi.setAppState === 'function') {
+        try {
+          await window.notebookAppApi.setAppState({
+            swarmFilter: state.swarmFilter,
+            selectedJobId: state.selectedJobId,
+            bugMode: state.bugMode,
+            activeWorkflowId: state.activeWorkflowId,
+            generatorMode: state.generatorMode,
+            checkedItems: state.checkedItems
+          });
+        } catch (e) {
+          // Ignore persistence errors silently in non-hosted fallback
+        }
+      }
+    }
+
+    // --- QA SWARM RENDERING ---
+    function setSwarmFilter(filter) {
+      state.swarmFilter = filter;
+      const btns = {
+        all: document.getElementById('filter-all'),
+        ios: document.getElementById('filter-ios'),
+        android: document.getElementById('filter-android')
+      };
+      Object.keys(btns).forEach((k) => {
+        if (btns[k]) btns[k].classList.toggle('is-active', k === filter);
+      });
+
+      const visibleJobs = getFilteredJobs();
+      if (visibleJobs.length > 0 && !visibleJobs.some((j) => j.id === state.selectedJobId)) {
+        state.selectedJobId = visibleJobs[0].id;
+      }
+
+      const kpiCount = document.getElementById('kpi-swarm-count');
+      if (kpiCount) {
+        kpiCount.textContent = filter === 'all' ? `6 потоков` : `3 потока (${filter.toUpperCase()})`;
+      }
+
+      renderSwarmMatrix();
+      renderSessionInspector();
+      saveAppState();
+    }
+
+    function toggleBugSimulation() {
+      state.bugMode = !state.bugMode;
+      const btn = document.getElementById('btn-toggle-bug');
+      const badge = document.getElementById('matrix-mode-badge');
+      const kpiStatus = document.getElementById('kpi-swarm-status');
+
+      if (btn) {
+        btn.textContent = state.bugMode ? `Вернуть штатный прогон` : `Смоделировать сбой платежа`;
+      }
+      if (badge) {
+        badge.textContent = state.bugMode ? `Режим: Сбой в iOS checkout → Bug Triage` : `Режим: Успешный прогон PR`;
+        badge.className = state.bugMode ? `status-chip is-amber` : `status-chip is-cyan`;
+      }
+      if (kpiStatus) {
+        kpiStatus.textContent = state.bugMode
+          ? `1 поток в Bug Triage, 5 потоков продолжают (fail-fast: false)`
+          : `2 платформы × 3 сценария (fail-fast: false)`;
+        kpiStatus.className = state.bugMode ? `metric-delta is-amber` : `metric-delta`;
+      }
+
+      if (state.bugMode) {
+        state.selectedJobId = `ios-pay`;
+        if (state.swarmFilter === 'android') {
+          setSwarmFilter('all');
+          return;
+        }
+      }
+
+      renderSwarmMatrix();
+      renderSessionInspector();
+      saveAppState();
+    }
+
+    function selectSwarmJob(jobId) {
+      state.selectedJobId = jobId;
+      renderSwarmMatrix();
+      renderSessionInspector();
+      saveAppState();
+    }
+
+    function setProofTab(tab) {
+      state.activeProofTab = tab;
+      renderSessionInspector();
+    }
+
+    function getFilteredJobs() {
+      if (state.swarmFilter === 'all') return SWARM_JOBS;
+      return SWARM_JOBS.filter((j) => j.platform === state.swarmFilter);
+    }
+
+    function renderSwarmMatrix() {
+      const container = document.getElementById('swarm-matrix-container');
+      if (!container) return;
+
+      const platforms = state.swarmFilter === 'all'
+        ? [`ios`, `android`]
+        : [state.swarmFilter];
+
+      let html = ``;
+      platforms.forEach((plt) => {
+        const pltTitle = plt === `ios` ? `iOS Simulator (--platform ios)` : `Android Emulator (--platform android)`;
+        const pltNote = plt === `ios` ? `Облачный образ iOS (без локального Mac)` : `Системный образ Android (CPU + OS)`;
+        html += `<div class="matrix-row-label">
+          <strong style="font-family: var(--font-headline); font-size: 0.95rem;">${pltTitle}</strong>
+          <span class="data-label">${pltNote}</span>
+        </div>`;
+
+        const rowJobs = SWARM_JOBS.filter((j) => j.platform === plt);
+        rowJobs.forEach((job) => {
+          const isSelected = job.id === state.selectedJobId;
+          const isBugged = state.bugMode && job.hasBugScenario;
+          const chipClass = isBugged ? `status-chip is-amber` : `status-chip`;
+          const chipText = isBugged ? `Bug Triage` : `Passed`;
+
+          html += `<button type="button" class="swarm-cell ${isSelected ? 'is-selected' : ''}" onclick="selectSwarmJob('${job.id}')">
+            <div class="swarm-cell-head">
+              <span class="swarm-cell-title">${job.flow}</span>
+              <span class="${chipClass}">${chipText}</span>
+            </div>
+            <div class="swarm-cell-meta">${job.flowTitle}</div>
+            <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: var(--space-xs); font-family: var(--font-label); font-size: var(--label-size); color: var(--on-surface-variant);">
+              <span>${job.agent}</span>
+              <span>${job.durationSec}с</span>
+            </div>
+          </button>`;
+        });
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderSessionInspector() {
+      const panel = document.getElementById('session-inspector');
+      if (!panel) return;
+
+      const job = SWARM_JOBS.find((j) => j.id === state.selectedJobId) || SWARM_JOBS[0];
+      const isBugged = state.bugMode && job.hasBugScenario;
+      const steps = isBugged ? job.bugSteps : job.steps;
+      const logsText = isBugged ? job.bugLogs : job.logs;
+
+      let tabBody = ``;
+      if (state.activeProofTab === `steps`) {
+        tabBody = `<ul class="proof-step-list">`;
+        steps.forEach((st, idx) => {
+          let badgeClass = `status-chip`;
+          let badgeText = `OK`;
+          if (st.status === `error`) {
+            badgeClass = `status-chip is-error`;
+            badgeText = `СБОЙ`;
+          } else if (st.status === `fixed`) {
+            badgeClass = `status-chip is-cyan`;
+            badgeText = `ИСПРАВЛЕНО`;
+          }
+          tabBody += `<li class="proof-step-item">
+            <span style="font-size: 0.875rem;">${idx + 1}. ${st.label}</span>
+            <span class="${badgeClass}">${badgeText}</span>
+          </li>`;
+        });
+        tabBody += `</ul>`;
+
+        if (isBugged) {
+          tabBody += `<div class="before-after-grid" style="margin-top: var(--space-sm);">
+            <div class="diff-card is-before">
+              <span class="data-label" style="color: var(--error);">Скриншот «До» (Bug)</span>
+              <span style="font-size: 0.85rem;">Кнопка подтверждения оплаты скрыта за клавиатурой; таймаут сценария.</span>
+            </div>
+            <div class="diff-card is-after">
+              <span class="data-label" style="color: var(--tertiary);">Скриншот «После» (Fix)</span>
+              <span style="font-size: 0.85rem;">Агент добавил отступ под клавиатуру и повторно прошёл оплату в PR.</span>
+            </div>
+          </div>`;
+        }
+      } else if (state.activeProofTab === `logs`) {
+        tabBody = `<pre class="code-pre" style="max-height: 220px;">${logsText}</pre>`;
+      } else {
+        tabBody = `<div class="well" style="display: grid; gap: var(--space-sm);">
+          <div>
+            <span class="data-label">Stream / Preview Link (требует вход в Expo по умолчанию)</span>
+            <div style="font-family: var(--font-label); font-size: 0.85rem; color: var(--primary); margin-top: var(--space-xs);">${job.streamUrl}</div>
+          </div>
+          <div>
+            <span class="data-label">Выделенный Appium-сервер сессии</span>
+            <div style="font-family: var(--font-label); font-size: 0.85rem; color: var(--on-surface); margin-top: var(--space-xs);">${job.appiumEndpoint}</div>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--on-surface-variant);">
+            Из веб-ссылки сессии ревьюер может смотреть живую трансляцию, загрузить видеозапись, пошаговые скриншоты и полные job logs.
+          </div>
+        </div>`;
+      }
+
+      panel.innerHTML = `
+        <div class="section-head">
+          <div>
+            <span class="data-label">Инспектор сессии · Proof on PR</span>
+            <h3 class="subhead">${job.platformLabel}: ${job.flow}</h3>
+          </div>
+          <span class="${isBugged ? 'status-chip is-amber' : 'status-chip'}">${isBugged ? 'Bug Triage (До/После)' : 'Proof готов'}</span>
+        </div>
+
+        <div class="inspector-meta-grid">
+          <div class="well">
+            <span class="data-label">ИИ-агент и навык</span>
+            <div style="font-weight: 600; margin-top: var(--space-xs);">${job.agent}</div>
+            <div style="font-size: 0.8125rem; color: var(--on-surface-variant);">${job.tool}</div>
+          </div>
+          <div class="well">
+            <span class="data-label">Среда и время</span>
+            <div style="font-weight: 600; margin-top: var(--space-xs);">${job.durationSec} сек</div>
+            <div style="font-size: 0.8125rem; color: var(--on-surface-variant);">${job.device}</div>
+          </div>
+        </div>
+
+        <div class="proof-tabs">
+          <button type="button" class="btn btn-secondary btn-sm ${state.activeProofTab === 'steps' ? 'is-active' : ''}" onclick="setProofTab('steps')">Шаги и скриншоты</button>
+          <button type="button" class="btn btn-secondary btn-sm ${state.activeProofTab === 'logs' ? 'is-active' : ''}" onclick="setProofTab('logs')">Job Logs</button>
+          <button type="button" class="btn btn-secondary btn-sm ${state.activeProofTab === 'links' ? 'is-active' : ''}" onclick="setProofTab('links')">Stream и Appium</button>
+        </div>
+
+        ${tabBody}
+      `;
+    }
+
+    // --- CHART.JS RENDERING ---
+    function initSwarmChart() {
+      const canvas = document.getElementById('swarm-chart');
+      if (!canvas || typeof Chart === 'undefined') return;
+
+      const cyan = cssVar('--data-1');
+      const sage = cssVar('--data-2');
+      const contextColor = cssVar('--data-context');
+      const textVariant = cssVar('--on-surface-variant');
+      const gridColor = cssVar('--outline-variant');
+
+      const ctx = canvas.getContext('2d');
+      swarmChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [
+            `Последовательно (1 агент, 6 потоков)`,
+            `QA Swarm iOS (3 параллельных агента)`,
+            `QA Swarm Android (3 параллельных агента)`,
+            `Общее время QA Swarm (iOS + Android)`
+          ],
+          datasets: [{
+            label: `Время выполнения (сек)`,
+            data: [956, 178, 186, 186],
+            backgroundColor: [contextColor, cyan, sage, cyan],
+            borderRadius: 4,
+            barThickness: 26
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (item) => ` ${item.raw} сек (~${(item.raw / 60).toFixed(1)} мин)`
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              grid: { color: gridColor },
+              ticks: {
+                color: textVariant,
+                font: { family: cssVar('--font-label'), size: 12 }
+              },
+              title: {
+                display: true,
+                text: `Секунды (иллюстративная модель суммы 6 потоков: 145+132+178+164+151+186 = 956с vs max = 186с)`,
+                color: textVariant,
+                font: { family: cssVar('--font-label'), size: 12 }
+              }
+            },
+            y: {
+              grid: { display: false },
+              ticks: {
+                color: cssVar('--on-surface'),
+                font: { family: cssVar('--font-body'), size: 12 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // --- WORKFLOWS EXPLORER ---
+    function selectWorkflow(id) {
+      state.activeWorkflowId = id;
+      renderWorkflows();
+      saveAppState();
+    }
+
+    function renderWorkflows() {
+      const btnWrap = document.getElementById('workflow-buttons');
+      const detailPanel = document.getElementById('workflow-detail-panel');
+      if (!btnWrap || !detailPanel) return;
+
+      let btnHtml = ``;
+      WORKFLOWS.forEach((wf) => {
+        const active = wf.id === state.activeWorkflowId;
+        btnHtml += `<button type="button" class="workflow-btn ${active ? 'is-active' : ''}" onclick="selectWorkflow('${wf.id}')">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);">
+            <strong style="font-family: var(--font-headline); font-size: var(--subhead-size);">${wf.title}</strong>
+            <span class="status-chip ${active ? 'is-cyan' : ''}">${wf.tag}</span>
+          </div>
+          <span style="font-size: 0.875rem; color: var(--on-surface-variant);">${wf.summary}</span>
+        </button>`;
+      });
+      btnWrap.innerHTML = btnHtml;
+
+      const activeWf = WORKFLOWS.find((w) => w.id === state.activeWorkflowId) || WORKFLOWS[0];
+      const nodes = activeWf.svgNodes;
+
+      const strokeCyan = cssVar('--primary');
+      const strokeOutline = cssVar('--outline');
+      const fillBg = cssVar('--surface-container');
+      const fillHighlight = cssVar('--primary-container');
+      const txtPrimary = cssVar('--on-surface');
+      const txtMuted = cssVar('--on-surface-variant');
+      const txtSage = cssVar('--tertiary');
+
+      const svgHtml = `<svg class="pipeline-svg" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Схема цикла ${activeWf.title}">
+        ${nodes.map((node, idx) => {
+          const x = 10 + idx * 172;
+          const isLast = idx === nodes.length - 1;
+          const boxFill = isLast ? fillHighlight : fillBg;
+          const boxStroke = isLast ? strokeCyan : strokeOutline;
+          const arrow = idx < nodes.length - 1
+            ? `<line x1="${x + 148}" y1="60" x2="${x + 168}" y2="60" stroke="${strokeCyan}" stroke-width="2" />
+               <polygon points="${x + 164},55 ${x + 172},60 ${x + 164},65" fill="${strokeCyan}" />`
+            : ``;
+          return `
+            <rect x="${x}" y="22" width="146" height="76" rx="8" fill="${boxFill}" stroke="${boxStroke}" stroke-width="1.5" />
+            <text x="${x + 73}" y="54" text-anchor="middle" fill="${txtPrimary}" font-family="Inter, sans-serif" font-size="13" font-weight="600">${node.label}</text>
+            <text x="${x + 73}" y="76" text-anchor="middle" fill="${isLast ? txtSage : txtMuted}" font-family="JetBrains Mono, monospace" font-size="11">${node.sub}</text>
+            ${arrow}
+          `;
+        }).join(``)}
+      </svg>`;
+
+      const stepsHtml = activeWf.steps.map((s, i) => `
+        <li class="proof-step-item">
+          <span><strong style="color: var(--primary); font-family: var(--font-label); margin-right: var(--space-sm);">0${i + 1}</strong>${s}</span>
+        </li>
+      `).join(``);
+
+      detailPanel.innerHTML = `
+        <div class="section-head">
+          <div>
+            <span class="data-label">Триггер: ${activeWf.trigger}</span>
+            <h3 class="subhead" style="margin-top: var(--space-xs);">${activeWf.title} — пошаговая механика</h3>
+          </div>
+          <span class="status-chip is-cyan">${activeWf.tag}</span>
+        </div>
+        <div class="pipeline-svg-wrap">${svgHtml}</div>
+        <ul class="proof-step-list">${stepsHtml}</ul>
+      `;
+    }
+
+    // --- YAML & ISSUE TEMPLATE GENERATOR ---
+    function setGeneratorMode(mode) {
+      state.generatorMode = mode;
+      const btnYaml = document.getElementById('mode-btn-yaml');
+      const btnIssue = document.getElementById('mode-btn-issue');
+      const ctrlYaml = document.getElementById('controls-yaml');
+      const ctrlIssue = document.getElementById('controls-issue');
+
+      if (btnYaml) btnYaml.classList.toggle('is-active', mode === 'yaml');
+      if (btnIssue) btnIssue.classList.toggle('is-active', mode === 'issue');
+      if (ctrlYaml) ctrlYaml.style.display = mode === 'yaml' ? 'grid' : 'none';
+      if (ctrlIssue) ctrlIssue.style.display = mode === 'issue' ? 'grid' : 'none';
+
+      updateGeneratedConfig();
+      saveAppState();
+    }
+
+    function updateGeneratedConfig() {
+      const outputEl = document.getElementById('generated-code-output');
+      const pathEl = document.getElementById('generated-file-path');
+      const titleEl = document.getElementById('generated-file-title');
+      if (!outputEl) return;
+
+      if (state.generatorMode === 'yaml') {
+        const wfType = document.getElementById('cfg-workflow-type')?.value || 'v2';
+        const isV2 = wfType === 'v2';
+        const matrixBlock = document.getElementById('matrix-options-block');
+        const flowsBlock = document.getElementById('flows-options-block');
+        if (matrixBlock) matrixBlock.style.display = isV2 ? 'grid' : 'none';
+        if (flowsBlock) flowsBlock.style.display = isV2 ? 'grid' : 'none';
+
+        const usePr = document.getElementById('trg-pr')?.checked ?? true;
+        const usePush = document.getElementById('trg-push')?.checked ?? false;
+        const useCron = document.getElementById('trg-cron')?.checked ?? false;
+
+        let onLines = [];
+        if (usePr) {
+          onLines.push(`  pull_request:\n    types: [opened, synchronize]`);
+        }
+        if (usePush) {
+          onLines.push(`  push:\n    branches: [main]`);
+        }
+        if (useCron) {
+          onLines.push(`  schedule:\n    - cron: '0 2 * * *'`);
+        }
+        if (onLines.length === 0) {
+          onLines.push(`  pull_request:\n    types: [opened, synchronize]`);
+        }
+
+        const useMaestro = document.getElementById('opt-maestro')?.checked ?? false;
+        const maestroCmd = useMaestro
+          ? `\n          # Запуск YAML-сценария Maestro через agent-device\n          npx agent-device run .maestro/checkout.yaml`
+          : ``;
+
+        if (!isV2) {
+          if (pathEl) pathEl.textContent = `.github/workflows/agentic-ci.yml`;
+          if (titleEl) titleEl.textContent = `Базовый Agentic CI (iOS Simulator)`;
+          outputEl.textContent = `name: Agentic CI with Expo Simulators
+
+on:
+${onLines.join('\n')}
+
+jobs:
+  agentic-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI & Expo Skills
+        run: |
+          npm install -g eas-cli
+          npx @expo/skills install
+
+      - name: Run Expo Agentic CI & Simulators
+        env:
+          EXPO_TOKEN: \${{ secrets.EXPO_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: \${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          # Проверка доступности Expo Simulators для аккаунта
+          eas simulator:availability --json
+
+          # Запуск облачной сессии симулятора и сбор Proof on PR
+          npx eas-cli simulator --platform ios${maestroCmd}`;
+        } else {
+          if (pathEl) pathEl.textContent = `.github/workflows/agentic-ci-v2.yml`;
+          if (titleEl) titleEl.textContent = `Параллельный QA Swarm Matrix`;
+
+          const platforms = [];
+          if (document.getElementById('plt-ios')?.checked) platforms.push('ios');
+          if (document.getElementById('plt-android')?.checked) platforms.push('android');
+          if (platforms.length === 0) platforms.push('ios');
+
+          const flows = [];
+          if (document.getElementById('flw-auth')?.checked) flows.push('auth-and-profile');
+          if (document.getElementById('flw-nav')?.checked) flows.push('main-navigation-and-search');
+          if (document.getElementById('flw-pay')?.checked) flows.push('checkout-and-payments');
+          if (flows.length === 0) flows.push('auth-and-profile');
+
+          const failFast = document.getElementById('opt-failfast')?.checked ?? true;
+
+          outputEl.textContent = `name: Expo QA Swarm Parallel CI
+
+on:
+${onLines.join('\n')}
+
+jobs:
+  qa-swarm-matrix:
+    name: QA Swarm (\${{ matrix.platform }} - \${{ matrix.flow }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: ${failFast ? 'false' : 'true'}
+      matrix:
+        platform: [${platforms.join(', ')}]
+        flow: [${flows.join(', ')}]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI & Expo Skills
+        run: |
+          npm install -g eas-cli
+          npx @expo/skills install
+
+      - name: Run Parallel QA Swarm Session
+        env:
+          EXPO_TOKEN: \${{ secrets.EXPO_TOKEN }}
+          CLAUDE_CODE_OAUTH_TOKEN: \${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          # Проверка доступности симуляторов
+          eas simulator:availability --json
+
+          # Запуск сессии для заданной платформы и сценария
+          echo "Running QA Swarm flow '\${{ matrix.flow }}' on '\${{ matrix.platform }}'..."
+          npx eas-cli simulator --platform \${{ matrix.platform }}${maestroCmd}`;
+        }
+      } else {
+        if (pathEl) pathEl.textContent = `.github/ISSUE_TEMPLATE/ai-agent-issue-template.md`;
+        if (titleEl) titleEl.textContent = `Шаблон задачи для агента (Issue to PR)`;
+
+        const issTitle = document.getElementById('iss-title')?.value || `Новая функция`;
+        const issGoal = document.getElementById('iss-goal')?.value || `Реализовать и проверить сценарий на облачном симуляторе.`;
+        const issStack = document.getElementById('iss-stack')?.value || `Expo SDK 58 / React Native (TypeScript), Expo Router`;
+        const issPlatform = document.getElementById('iss-platform')?.value || `ios_android`;
+
+        let platformLine = `iOS / Android`;
+        let simCmd = `eas simulator --platform ios # и --platform android`;
+        if (issPlatform === 'ios') {
+          platformLine = `iOS (iOS Simulator)`;
+          simCmd = `eas simulator --platform ios`;
+        } else if (issPlatform === 'android') {
+          platformLine = `Android (Android Emulator)`;
+          simCmd = `eas simulator --platform android`;
+        }
+
+        outputEl.textContent = `---
+name: "AI Agent Task (Issue to PR)"
+description: "Шаблон задачи для автономного выполнения ИИ-агентом с проверкой в Expo Simulators"
+title: "[AI Task]: ${issTitle}"
+labels: ["ai-agent", "agentic-ci"]
+assignees: []
+---
+
+## Описание задачи (Task Overview)
+**Цель**: ${issGoal}
+
+## Стек и контекст проекта (Tech Stack & Context)
+* **Стек**: ${issStack}
+* **Целевая платформа**: ${platformLine}
+* **Документация для агента**: Expo MCP Server (docs.expo.dev/mcp/) и индекс llms.txt
+
+## Инструкция по выполнению для ИИ-агента (Agent Workflow)
+### Шаг 1. Использование Expo Skills & Проверка окружения
+* Используй навык eas-simulator из пакета @expo/skills.
+* Проверь доступность облачных симуляторов:
+\`\`\`bash
+eas simulator:availability --json
+\`\`\`
+
+### Шаг 2. Запуск симулятора и автономное UI-тестирование
+* Запусти облачную сессию устройства:
+\`\`\`bash
+${simCmd}
+\`\`\`
+* Установи сборку, открой главный экран, выполни целевое действие и убедись в отсутствии ошибок консоли и наложений UI.
+
+## Сбор доказательств и подтверждение в PR (Proof on PR)
+* **Описание изменений**: список правки в коде.
+* **Скриншоты**: ключевые этапы проверки (и «До / После» при исправлении бага).
+* **Видеозапись и логи**: Preview Link сессии Expo Simulators и job logs.`;
+      }
+    }
+
+    function showFeedback(elId, message) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.textContent = message;
+      setTimeout(() => {
+        if (el.textContent === message) el.textContent = ``;
+      }, 3200);
+    }
+
+    function copyGeneratedCode() {
+      const outputEl = document.getElementById('generated-code-output');
+      if (!outputEl) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(outputEl.textContent).then(() => {
+          showFeedback('config-feedback', `Скопировано в буфер обмена.`);
+        }).catch(() => {
+          showFeedback('config-feedback', `Не удалось скопировать автоматически — используйте «Скачать файл».`);
+        });
+      } else {
+        showFeedback('config-feedback', `Используйте кнопку «Скачать файл» для сохранения.`);
+      }
+    }
+
+    function downloadGeneratedCode() {
+      const outputEl = document.getElementById('generated-code-output');
+      const wfType = document.getElementById('cfg-workflow-type')?.value || 'v2';
+      if (!outputEl) return;
+
+      const filename = state.generatorMode === 'yaml'
+        ? (wfType === 'v2' ? `agentic-ci-v2.yml` : `agentic-ci.yml`)
+        : `ai-agent-issue-template.md`;
+
+      if (window.notebookAppApi && typeof window.notebookAppApi.triggerFileDownload === 'function') {
+        window.notebookAppApi.triggerFileDownload({
+          content: outputEl.textContent,
+          contentType: 'text/plain',
+          encoding: 'UTF-8',
+          filename: filename
+        });
+        showFeedback('config-feedback', `Файл ${filename} подготовлен к загрузке.`);
+      }
+    }
+
+    // --- CLI & INTEGRATIONS TABLE ---
+    function copyCliText(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showFeedback('cli-copy-feedback', `Скопировано: ${text}`);
+        }).catch(() => {
+          showFeedback('cli-copy-feedback', `Команда: ${text}`);
+        });
+      } else {
+        showFeedback('cli-copy-feedback', `Команда: ${text}`);
+      }
+    }
+
+    function renderCliTable() {
+      const tbody = document.getElementById('cli-table-body');
+      const query = (document.getElementById('cli-search')?.value || ``).toLowerCase().trim();
+      const cat = document.getElementById('cli-category')?.value || `all`;
+      if (!tbody) return;
+
+      const filtered = CLI_ITEMS.filter((item) => {
+        const matchesCat = cat === `all` || item.cat === cat;
+        const matchesQuery = !query ||
+          item.name.toLowerCase().includes(query) ||
+          item.desc.toLowerCase().includes(query) ||
+          item.catLabel.toLowerCase().includes(query);
+        return matchesCat && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr>
+          <td colspan="4" style="color: var(--on-surface-variant); text-align: center; padding: var(--space-xl);">
+            По запросу ничего не найдено. Очистите строку поиска или выберите «Все категории».
+          </td>
+        </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item) => {
+        const chipClass = item.cat === 'cli' ? 'status-chip is-cyan' : (item.cat === 'agents' ? 'status-chip' : 'status-chip is-amber');
+        const safeArg = item.name.replace(/`/g, '');
+        return `<tr>
+          <td><span class="${chipClass}">${item.catLabel}</span></td>
+          <td><code style="font-family: var(--font-label); color: var(--on-primary-container);">${item.name}</code></td>
+          <td style="color: var(--on-surface-variant); font-size: 0.9rem;">${item.desc}</td>
+          <td>
+            <button type="button" class="cmd-copy-btn" onclick="copyCliText('${safeArg.replace(/'/g, '')}')">Копировать</button>
+          </td>
+        </tr>`;
+      }).join(``);
+    }
+
+    // --- READINESS CHECKLIST ---
+    function toggleChecklistItem(id) {
+      state.checkedItems[id] = !state.checkedItems[id];
+      renderChecklist();
+      saveAppState();
+    }
+
+    function handleResetChecklist(btn) {
+      if (!btn) return;
+      if (btn.dataset.armed !== 'true') {
+        btn.dataset.armed = 'true';
+        btn.textContent = `Нажмите ещё раз для сброса`;
+        setTimeout(() => {
+          if (btn.dataset.armed === 'true') {
+            btn.dataset.armed = 'false';
+            btn.textContent = `Сбросить прогресс`;
+          }
+        }, 3500);
+        return;
+      }
+      btn.dataset.armed = 'false';
+      btn.textContent = `Сбросить прогресс`;
+      state.checkedItems = {};
+      renderChecklist();
+      saveAppState();
+    }
+
+    function exportChecklistMarkdown() {
+      let lines = [`# Чек-лист готовности Expo Simulators + Agentic CI\n`];
+      CHECKLIST_GROUPS.forEach((grp) => {
+        lines.push(`\n## ${grp.title}`);
+        grp.items.forEach((item) => {
+          const mark = state.checkedItems[item.id] ? `x` : ` `;
+          lines.push(`- [${mark}] ${item.text}`);
+        });
+      });
+
+      if (window.notebookAppApi && typeof window.notebookAppApi.triggerFileDownload === 'function') {
+        window.notebookAppApi.triggerFileDownload({
+          content: lines.join('\n'),
+          contentType: 'text/plain',
+          encoding: 'UTF-8',
+          filename: `expo-agentic-ci-checklist.txt`
+        });
+      }
+    }
+
+    function renderChecklist() {
+      const container = document.getElementById('checklist-container');
+      const summaryEl = document.getElementById('checklist-summary-text');
+      const badgeEl = document.getElementById('checklist-badge');
+      const fillEl = document.getElementById('checklist-progress-fill');
+      const barEl = document.getElementById('checklist-progressbar');
+      const kpiScore = document.getElementById('kpi-checklist-score');
+      const kpiNote = document.getElementById('kpi-checklist-note');
+
+      if (!container) return;
+
+      let total = 0;
+      let done = 0;
+      let html = ``;
+
+      CHECKLIST_GROUPS.forEach((grp) => {
+        html += `<div class="well" style="display: grid; gap: var(--space-sm); align-content: start;">
+          <h3 class="subhead" style="font-size: 1rem;">${grp.title}</h3>`;
+        grp.items.forEach((item) => {
+          total += 1;
+          const isChecked = Boolean(state.checkedItems[item.id]);
+          if (isChecked) done += 1;
+          html += `<label class="check-item ${isChecked ? 'is-done' : ''}">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')">
+            <span style="font-size: 0.875rem;">${item.text}</span>
+          </label>`;
+        });
+        html += `</div>`;
+      });
+
+      container.innerHTML = html;
+
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      if (summaryEl) summaryEl.textContent = `Выполнено ${done} из ${total} пунктов (${pct}%)`;
+      if (fillEl) fillEl.style.width = `${pct}%`;
+      if (barEl) barEl.setAttribute('aria-valuenow', String(done));
+
+      if (badgeEl) {
+        if (done === total) {
+          badgeEl.textContent = `Готово к Issue to PR`;
+          badgeEl.className = `status-chip`;
+        } else if (done > 0) {
+          badgeEl.textContent = `В процессе настройки`;
+          badgeEl.className = `status-chip is-cyan`;
+        } else {
+          badgeEl.textContent = `Подготовка окружения`;
+          badgeEl.className = `status-chip is-amber`;
+        }
+      }
+
+      if (kpiScore) kpiScore.textContent = `${done} / ${total}`;
+      if (kpiNote) {
+        kpiNote.textContent = done === total
+          ? `Инфраструктура готова к автономному запуску`
+          : `Прогресс сохранён в сессии`;
+        kpiNote.className = done === total ? `metric-delta` : `metric-delta is-amber`;
+      }
+    }
+
+    // --- BOOTSTRAP ---
+    async function initDashboard() {
+      try {
+        if (window.notebookAppApi && typeof window.notebookAppApi.getAppState === 'function') {
+          const saved = await window.notebookAppApi.getAppState();
+          if (saved && typeof saved === 'object') {
+            if (saved.swarmFilter) state.swarmFilter = saved.swarmFilter;
+            if (saved.selectedJobId) state.selectedJobId = saved.selectedJobId;
+            if (typeof saved.bugMode === 'boolean') state.bugMode = saved.bugMode;
+            if (saved.activeWorkflowId) state.activeWorkflowId = saved.activeWorkflowId;
+            if (saved.generatorMode) state.generatorMode = saved.generatorMode;
+            if (saved.checkedItems && typeof saved.checkedItems === 'object') {
+              state.checkedItems = saved.checkedItems;
+            }
+          }
+        }
+      } catch (e) {
+        // Proceed with defaults
+      }
+
+      // Apply restored UI states
+      setSwarmFilter(state.swarmFilter);
+      if (state.bugMode) {
+        // Flip twice or apply visual indicators cleanly
+        state.bugMode = false;
+        toggleBugSimulation();
+      }
+      renderWorkflows();
+      setGeneratorMode(state.generatorMode);
+      renderCliTable();
+      renderChecklist();
+      initSwarmChart();
+
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+      if (window.notebookAppApi && typeof window.notebookAppApi.notifyAppReady === 'function') {
+        window.notebookAppApi.notifyAppReady();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initDashboard);
+  </script>
+</body>
+</html>
