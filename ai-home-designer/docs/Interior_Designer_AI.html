@@ -1,0 +1,2915 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="narrative">
+  <meta name="design-style" content="carbon">
+  <title>Interior Designer AI (Home AI) — Technical Documentation &amp; Architecture Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+
+      /* Blue-Gray Palette & Carbon Structural Hierarchy */
+      --background: #F7F9FC;
+      --surface: #FFFFFF;
+      --surface-container-low: #F0F4F8;
+      --surface-container: #EAF1F8;
+      --surface-container-high: #DCE6F1;
+
+      /* Ink */
+      --on-surface: #131D27;
+      --on-surface-variant: #445668;
+
+      /* Rules */
+      --outline: #7A8E9F;
+      --outline-variant: #D3DFEB;
+
+      /* Accents */
+      --primary: #355F84;
+      --primary-hover: #294B6A;
+      --on-primary: #FFFFFF;
+      --primary-container: #EAF1F8;
+      --on-primary-container: #1C364D;
+      --secondary: #445668;
+      --tertiary: #2A7B6F;
+      --chart-accent: #8BAECF;
+
+      /* Semantic */
+      --positive: #1F7A4C;
+      --positive-bg: #E6F4EC;
+      --warning: #8F5B00;
+      --warning-bg: #FBF3E0;
+      --error: #B8292F;
+      --error-bg: #FBEAEA;
+      --on-error: #FFFFFF;
+
+      /* Data Series */
+      --data-1: #355F84;
+      --data-2: #8BAECF;
+      --data-3: #2A7B6F;
+      --data-4: #6B4C9A;
+      --data-context: #9AAAB8;
+
+      /* Code Surface (Dark Contrast Anchor) */
+      --code-bg: #131D27;
+      --code-surface: #1B2836;
+      --code-ink: #EBF2F8;
+      --code-muted: #9FB4C8;
+      --code-border: #2C3F52;
+
+      /* Preview Visual Tokens */
+      --room-wall: #E3EAF1;
+      --room-floor: #C7D3DF;
+      --room-accent: #355F84;
+      --room-restyle-wall: #29435C;
+      --room-restyle-floor: #4A6885;
+      --room-restyle-accent: #8BAECF;
+
+      /* Typography */
+      --font-headline: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-label: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+      --display-size: clamp(2rem, 1.4rem + 2.4vw, 3.125rem);
+      --headline-size: clamp(1.4rem, 1.15rem + 1vw, 1.95rem);
+      --subhead-size: clamp(1.1rem, 1rem + 0.4vw, 1.3rem);
+      --body-size: clamp(0.96875rem, 0.94rem + 0.15vw, 1.03125rem);
+      --label-size: 0.75rem;
+
+      /* Shape & Borders (Carbon discipline) */
+      --rounded: 0.125rem;
+      --rounded-lg: 0.25rem;
+      --rounded-full: 0.75rem;
+
+      /* Effects */
+      --focus: #355F84;
+      --shadow-1: 0 2px 6px rgba(19, 29, 39, 0.08);
+      --rule: 1px solid var(--outline-variant);
+      --field-rule: 1px solid var(--outline);
+      --indicator: 2px solid var(--primary);
+
+      /* Spacing Scale (4pt base) */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+
+      --background: #0F161D;
+      --surface: #16202B;
+      --surface-container-low: #1B2734;
+      --surface-container: #21303F;
+      --surface-container-high: #2B3E52;
+
+      --on-surface: #EDF3F8;
+      --on-surface-variant: #B4C5D6;
+
+      --outline: #5D768E;
+      --outline-variant: #2B3D4F;
+
+      --primary: #8BAECF;
+      --primary-hover: #A5C2DC;
+      --on-primary: #0F161D;
+      --primary-container: #233A50;
+      --on-primary-container: #EAF1F8;
+      --secondary: #B4C5D6;
+      --tertiary: #4DB8A8;
+      --chart-accent: #355F84;
+
+      --positive: #52C98A;
+      --positive-bg: #143324;
+      --warning: #E5B54F;
+      --warning-bg: #36290D;
+      --error: #F0787D;
+      --error-bg: #3B181A;
+      --on-error: #0F161D;
+
+      --data-1: #8BAECF;
+      --data-2: #5289B8;
+      --data-3: #4DB8A8;
+      --data-4: #A88CE0;
+      --data-context: #5B7083;
+
+      --code-bg: #0A0F14;
+      --code-surface: #121A22;
+      --code-ink: #EBF2F8;
+      --code-muted: #98ADC2;
+      --code-border: #223242;
+
+      --focus: #8BAECF;
+      --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Base Reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      overflow-x: clip;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.58;
+      -webkit-font-smoothing: antialiased;
+    }
+    header { position: static !important; }
+
+    /* Focus Accessibility */
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    /* Top Masthead */
+    .masthead {
+      background-color: var(--surface);
+      border-bottom: var(--rule);
+      padding: var(--space-lg) var(--space-lg) var(--space-xl);
+    }
+    .masthead-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .masthead-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-md);
+      padding-bottom: var(--space-md);
+      border-bottom: var(--rule);
+      margin-bottom: var(--space-lg);
+    }
+    .kicker {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .kicker-rule {
+      display: inline-block;
+      width: 14px;
+      height: 2px;
+      background-color: var(--primary);
+    }
+    .masthead-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      min-height: 44px;
+      padding: 0 var(--space-md);
+      background-color: var(--surface-container-low);
+      color: var(--on-surface);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--rounded);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+    }
+    .theme-toggle:hover {
+      background-color: var(--surface-container);
+      border-color: var(--primary);
+    }
+    .masthead-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+      gap: var(--space-xl);
+      align-items: end;
+    }
+    .display-title {
+      font-family: var(--font-headline);
+      font-size: var(--display-size);
+      font-weight: 300;
+      line-height: 1.12;
+      letter-spacing: -0.015em;
+      margin: 0 0 var(--space-md);
+      color: var(--on-surface);
+    }
+    .display-title strong {
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .lede {
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      color: var(--on-surface-variant);
+      max-width: 65ch;
+      margin: 0;
+    }
+    .masthead-meta-card {
+      background-color: var(--surface-container);
+      border-left: 3px solid var(--primary);
+      padding: var(--space-md) var(--space-lg);
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-md);
+      padding: var(--space-xs) 0;
+      border-bottom: var(--rule);
+      font-size: 0.875rem;
+    }
+    .meta-row:last-child { border-bottom: 0; }
+    .meta-key {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--on-surface-variant);
+    }
+    .meta-val {
+      font-family: var(--font-label);
+      font-weight: 500;
+      color: var(--on-surface);
+      text-align: right;
+    }
+
+    /* Main 2-Column Document Shell */
+    .doc-shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: var(--space-xl);
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+      align-items: start;
+    }
+    .doc-shell > * { min-width: 0; }
+
+    /* Sidebar Table of Contents */
+    .toc-rail {
+      position: sticky;
+      top: var(--space-lg);
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-md);
+    }
+    .toc-heading {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--on-surface-variant);
+      padding-bottom: var(--space-sm);
+      margin: 0 0 var(--space-sm);
+      border-bottom: var(--rule);
+    }
+    .toc-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .toc-link {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-sm);
+      min-height: 40px;
+      padding: var(--space-xs) var(--space-sm);
+      color: var(--on-surface-variant);
+      text-decoration: none;
+      font-size: 0.875rem;
+      line-height: 1.35;
+      border-left: 2px solid transparent;
+      transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+    }
+    .toc-link:hover {
+      background-color: var(--surface-container-low);
+      color: var(--on-surface);
+    }
+    .toc-link.is-active {
+      background-color: var(--primary-container);
+      color: var(--on-primary-container);
+      border-left-color: var(--primary);
+      font-weight: 600;
+    }
+    .toc-num {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    /* Mobile TOC Jump Strip */
+    .mobile-toc {
+      display: none;
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    .mobile-toc-label {
+      display: block;
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--on-surface-variant);
+      margin-bottom: var(--space-xs);
+    }
+    .mobile-toc-select {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 var(--space-lg) 0 var(--space-md);
+      background-color: var(--surface-container-low);
+      color: var(--on-surface);
+      border: 0;
+      border-bottom: var(--field-rule);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+    }
+
+    /* Document Content Sections */
+    .doc-main {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2xl);
+      container-type: inline-size;
+    }
+    .doc-section {
+      scroll-margin-top: var(--space-lg);
+    }
+    .section-head {
+      border-bottom: var(--rule);
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-lg);
+    }
+    .section-kicker {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+      margin-bottom: var(--space-xs);
+    }
+    .section-title {
+      font-family: var(--font-headline);
+      font-size: var(--headline-size);
+      font-weight: 300;
+      line-height: 1.2;
+      margin: 0;
+      color: var(--on-surface);
+    }
+    .section-title strong { font-weight: 600; }
+    .section-intro {
+      max-width: 68ch;
+      color: var(--on-surface-variant);
+      margin: var(--space-sm) 0 0;
+    }
+    .subhead {
+      font-family: var(--font-headline);
+      font-size: var(--subhead-size);
+      font-weight: 600;
+      line-height: 1.3;
+      margin: var(--space-lg) 0 var(--space-sm);
+      color: var(--on-surface);
+    }
+    .prose {
+      max-width: 68ch;
+      margin: 0 0 var(--space-md);
+      color: var(--on-surface);
+    }
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+      background-color: var(--surface-container-low);
+      border: var(--rule);
+      padding: 2px var(--space-sm);
+      margin-top: var(--space-xs);
+    }
+
+    /* Metric Tiles (Carbon 2px bottom indicator on primary tile) */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    .kpi-tile {
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-md);
+    }
+    .kpi-tile.is-primary {
+      background-color: var(--surface-container);
+      border-bottom: var(--indicator);
+    }
+    .kpi-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--on-surface-variant);
+      margin-bottom: var(--space-xs);
+    }
+    .kpi-val {
+      font-family: var(--font-label);
+      font-size: 1.75rem;
+      font-weight: 400;
+      line-height: 1.15;
+      color: var(--on-surface);
+      margin-bottom: var(--space-xs);
+    }
+    .kpi-note {
+      font-size: 0.8125rem;
+      color: var(--on-surface-variant);
+    }
+
+    /* Two-column Split Grid */
+    .split-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .panel {
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-lg);
+    }
+    .panel-tinted {
+      background-color: var(--surface-container);
+      border: var(--rule);
+      padding: var(--space-lg);
+    }
+
+    /* Chart Container */
+    .chart-box {
+      position: relative;
+      min-height: 240px;
+      width: 100%;
+    }
+
+    /* Interactive Architecture Map */
+    .arch-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .arch-diagram-wrap {
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-md);
+      overflow-x: auto;
+    }
+    .arch-svg {
+      width: 100%;
+      min-width: 560px;
+      height: auto;
+      display: block;
+    }
+    .arch-node {
+      cursor: pointer;
+      transition: opacity var(--dur-micro) var(--ease-out);
+    }
+    .arch-node rect.node-box {
+      fill: var(--surface-container-low);
+      stroke: var(--outline);
+      stroke-width: 1.5;
+      transition: fill var(--dur-micro) var(--ease-out), stroke var(--dur-micro) var(--ease-out), stroke-width var(--dur-micro) var(--ease-out);
+    }
+    .arch-node:hover rect.node-box {
+      fill: var(--surface-container);
+      stroke: var(--primary);
+    }
+    .arch-node.is-selected rect.node-box {
+      fill: var(--primary-container);
+      stroke: var(--primary);
+      stroke-width: 2.5;
+    }
+    .arch-node text.node-title {
+      fill: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .arch-node text.node-sub {
+      fill: var(--on-surface-variant);
+      font-family: var(--font-label);
+      font-size: 10px;
+    }
+    .arch-connector {
+      stroke: var(--chart-accent);
+      stroke-width: 1.75;
+      fill: none;
+    }
+    .arch-connector-dashed {
+      stroke: var(--outline);
+      stroke-width: 1.25;
+      stroke-dasharray: 4 3;
+      fill: none;
+    }
+    .arch-inspector {
+      background-color: var(--surface);
+      border: var(--rule);
+      border-top: 3px solid var(--primary);
+      padding: var(--space-lg);
+    }
+    .inspector-kicker {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      margin-bottom: var(--space-xs);
+    }
+    .inspector-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 var(--space-sm);
+    }
+    .inspector-list {
+      margin: var(--space-md) 0;
+      padding-left: 1.15rem;
+      color: var(--on-surface-variant);
+    }
+    .inspector-list li { margin-bottom: var(--space-xs); }
+
+    /* Interactive Comparison Table & Filters */
+    .filter-toolbar {
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-md);
+      margin-bottom: var(--space-md);
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(175px, 100%), 1fr));
+      gap: var(--space-md);
+      align-items: end;
+    }
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .field-label {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--on-surface-variant);
+    }
+    .field-input, .field-select {
+      height: 40px;
+      width: 100%;
+      background-color: var(--surface-container-low);
+      color: var(--on-surface);
+      border: 0;
+      border-bottom: var(--field-rule);
+      border-radius: var(--rounded) var(--rounded) 0 0;
+      padding: 0 var(--space-md);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+    }
+    .field-select {
+      padding-right: var(--space-xl);
+    }
+    .field-input:focus, .field-select:focus {
+      background-color: var(--surface-container);
+      border-bottom-color: var(--primary);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      height: 40px;
+      padding: 0 var(--space-lg);
+      border-radius: var(--rounded);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--on-primary);
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+    .btn-secondary {
+      background-color: var(--surface);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn-secondary:hover {
+      background-color: var(--primary-container);
+    }
+    .btn-ghost {
+      background-color: transparent;
+      color: var(--primary);
+      border-color: var(--outline-variant);
+    }
+    .btn-ghost:hover {
+      background-color: var(--surface-container-low);
+    }
+
+    .table-status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--on-surface-variant);
+    }
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      background-color: var(--surface);
+      border: var(--rule);
+    }
+    table.comp-table {
+      width: 100%;
+      min-width: 860px;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+    .comp-table thead th {
+      background-color: var(--surface-container-high);
+      color: var(--on-surface);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.75rem var(--space-md);
+      border-bottom: 2px solid var(--outline);
+      white-space: nowrap;
+    }
+    .sort-btn {
+      background: none;
+      border: 0;
+      padding: 0;
+      color: inherit;
+      font: inherit;
+      text-transform: inherit;
+      letter-spacing: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .comp-table tbody tr {
+      border-bottom: var(--rule);
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+    .comp-table tbody tr:nth-child(even) {
+      background-color: var(--surface-container-low);
+    }
+    .comp-table tbody tr:hover {
+      background-color: var(--surface-container);
+    }
+    .comp-table tbody tr.is-row-selected {
+      background-color: var(--primary-container);
+      outline: 1px solid var(--primary);
+    }
+    .comp-table td {
+      padding: 0.75rem var(--space-md);
+      vertical-align: top;
+    }
+    .comp-name {
+      font-weight: 600;
+      color: var(--on-surface);
+      display: block;
+    }
+    .comp-sub {
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      color: var(--on-surface-variant);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: var(--rounded-full);
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-public {
+      background-color: var(--surface-container);
+      color: var(--on-primary-container);
+      border-color: var(--chart-accent);
+    }
+    .badge-secret {
+      background-color: var(--error-bg);
+      color: var(--error);
+      border-color: var(--error);
+    }
+    .badge-gov {
+      background-color: var(--positive-bg);
+      color: var(--positive);
+      border-color: var(--positive);
+    }
+    .badge-isolated {
+      background-color: var(--warning-bg);
+      color: var(--warning);
+      border-color: var(--warning);
+    }
+    .badge-unavailable {
+      background-color: var(--surface-container-low);
+      color: var(--on-surface-variant);
+      border-color: var(--outline-variant);
+    }
+    .detail-drawer {
+      margin-top: var(--space-md);
+      background-color: var(--surface);
+      border: var(--rule);
+      border-left: 3px solid var(--primary);
+      padding: var(--space-md) var(--space-lg);
+    }
+
+    /* 6-Stage Pipeline Stepper */
+    .pipeline-nav {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+    .stage-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      min-height: 56px;
+      padding: var(--space-sm) var(--space-md);
+      background-color: var(--surface);
+      border: var(--rule);
+      border-bottom: 2px solid transparent;
+      color: var(--on-surface);
+      text-align: left;
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
+    }
+    .stage-pill:hover {
+      background-color: var(--surface-container-low);
+    }
+    .stage-pill.is-active {
+      background-color: var(--primary-container);
+      border-bottom: var(--indicator);
+    }
+    .stage-num {
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+    .stage-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .stage-panel {
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-lg);
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: var(--space-lg);
+    }
+    .stage-controls {
+      display: flex;
+      gap: var(--space-sm);
+      margin-top: var(--space-md);
+    }
+    .kv-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .kv-list li {
+      padding: var(--space-sm) 0;
+      border-bottom: var(--rule);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .kv-list li:last-child { border-bottom: 0; }
+
+    /* Schema Cards */
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-lg);
+    }
+    .schema-card {
+      background-color: var(--surface);
+      border: var(--rule);
+      border-top: 2px solid var(--primary);
+      padding: var(--space-md);
+    }
+    .schema-title {
+      font-family: var(--font-label);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin: 0 0 var(--space-xs);
+    }
+    .schema-cols {
+      list-style: none;
+      margin: var(--space-sm) 0 0;
+      padding: 0;
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      color: var(--on-surface-variant);
+    }
+    .schema-cols li {
+      padding: 3px 0;
+      border-top: var(--rule);
+    }
+
+    /* Compliance Checklist */
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+      gap: var(--space-sm);
+    }
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-sm);
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-sm) var(--space-md);
+      cursor: pointer;
+    }
+    .check-item input[type="checkbox"] {
+      margin-top: 4px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    /* ImageKit Media Lab & Before/After Slider */
+    .lab-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: var(--space-lg);
+      align-items: start;
+    }
+    .mode-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+    .mode-btn {
+      min-height: 40px;
+      padding: 0 var(--space-md);
+      background-color: var(--surface);
+      border: var(--rule);
+      color: var(--on-surface);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      cursor: pointer;
+    }
+    .mode-btn.is-active {
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+    }
+    .url-preview-box {
+      background-color: var(--code-bg);
+      color: var(--code-ink);
+      font-family: var(--font-label);
+      font-size: 0.8125rem;
+      padding: var(--space-md);
+      border: 1px solid var(--code-border);
+      word-break: break-all;
+      margin-bottom: var(--space-md);
+    }
+    .compare-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      min-height: 240px;
+      background-color: var(--surface-container-low);
+      border: var(--rule);
+      overflow: hidden;
+      user-select: none;
+    }
+    .compare-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .compare-after {
+      clip-path: inset(0 0 0 50%);
+    }
+    .compare-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      background-color: var(--on-primary);
+      box-shadow: 0 0 0 1px var(--primary);
+      pointer-events: none;
+    }
+    .compare-tag {
+      position: absolute;
+      top: var(--space-sm);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      background-color: var(--code-bg);
+      color: var(--code-ink);
+      border: 1px solid var(--code-border);
+    }
+    .compare-tag-before { left: var(--space-sm); }
+    .compare-tag-after { right: var(--space-sm); }
+    .watermark-overlay {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      background-color: var(--code-bg);
+      color: var(--code-ink);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      border: 1px solid var(--chart-accent);
+      display: none;
+    }
+    .watermark-overlay.is-visible { display: inline-block; }
+    .slider-control-row {
+      margin-top: var(--space-sm);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+    .slider-range {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* Prompt & Code Tabs */
+    .tab-bar {
+      display: flex;
+      flex-wrap: wrap;
+      border-bottom: var(--rule);
+      margin-bottom: var(--space-md);
+      gap: var(--space-xs);
+    }
+    .tab-btn {
+      min-height: 44px;
+      padding: 0 var(--space-md);
+      background: none;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--on-surface-variant);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .tab-btn:hover {
+      color: var(--on-surface);
+      background-color: var(--surface-container-low);
+    }
+    .tab-btn.is-active {
+      color: var(--primary);
+      font-weight: 600;
+      border-bottom: var(--indicator);
+    }
+    .code-card {
+      background-color: var(--code-bg);
+      color: var(--code-ink);
+      border: 1px solid var(--code-border);
+      margin-bottom: var(--space-lg);
+    }
+    .code-card-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      background-color: var(--code-surface);
+      border-bottom: 1px solid var(--code-border);
+    }
+    .code-filename {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--code-ink);
+    }
+    .copy-btn {
+      min-height: 34px;
+      padding: 0 var(--space-md);
+      background-color: var(--primary);
+      color: var(--on-primary);
+      border: 0;
+      border-radius: var(--rounded);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+    }
+    .copy-btn:hover { background-color: var(--primary-hover); }
+    pre.code-pre {
+      margin: 0;
+      padding: var(--space-md);
+      overflow-x: auto;
+      font-family: var(--font-label);
+      font-size: 0.8125rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Phase Grid */
+    .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+      gap: var(--space-md);
+    }
+    .phase-card {
+      background-color: var(--surface);
+      border: var(--rule);
+      padding: var(--space-md);
+    }
+    .phase-num {
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: var(--space-xs);
+    }
+    .phase-title {
+      font-weight: 600;
+      margin: 0 0 var(--space-xs);
+    }
+    .phase-desc {
+      font-size: 0.875rem;
+      color: var(--on-surface-variant);
+      margin: 0;
+    }
+
+    /* Footer */
+    .doc-footer {
+      border-top: var(--rule);
+      padding-top: var(--space-lg);
+      margin-top: var(--space-xl);
+      color: var(--on-surface-variant);
+      font-size: 0.875rem;
+    }
+
+    /* Responsive Breakpoints */
+    @container (max-width: 720px) {
+      .arch-layout, .split-grid, .stage-panel, .lab-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 960px) {
+      .masthead-grid { grid-template-columns: 1fr; }
+      .doc-shell { grid-template-columns: 1fr; }
+      .toc-rail { display: none; }
+      .mobile-toc { display: block; }
+      .arch-layout, .split-grid, .stage-panel, .lab-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .masthead { padding: var(--space-md); }
+      .doc-shell { padding: var(--space-md); gap: var(--space-lg); }
+      .panel, .panel-tinted, .arch-inspector, .stage-panel { padding: var(--space-md); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="masthead-bar">
+        <div class="kicker">
+          <span class="kicker-rule" aria-hidden="true"></span>
+          <span>Technical Specification &amp; Architecture Portal</span>
+        </div>
+        <div class="masthead-actions">
+          <button type="button" class="theme-toggle" id="theme-toggle-btn" aria-pressed="false" onclick="toggleTheme()">
+            <span id="theme-toggle-label">Switch to Dark Surface</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="masthead-grid">
+        <div>
+          <h1 class="display-title">Interior Designer AI (<strong>Home AI</strong>): End-to-End Architecture &amp; Workflow</h1>
+          <p class="lede">
+            An exhaustive, source-grounded technical documentation portal covering the complete build lifecycle — from Plan Mode discovery and mock-data UI generation to Neon Postgres, ImageKit transformations, OpenAI room redesign, CodeRabbit security governance, Cloudflare Pages legal hosting, and Expo Simulators release.
+          </p>
+          <span class="source-tag">Primary Sources: Техническая документация проекта Interior Designer AI · Build an Interior Designer AI App with Claude · GitHub burakorkmez/home-ai</span>
+        </div>
+
+        <aside class="masthead-meta-card" aria-label="Project Summary Metadata">
+          <div class="meta-row">
+            <span class="meta-key">Target Platform</span>
+            <span class="meta-val">iOS &amp; Android (Expo)</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">V1 Scope Model</span>
+            <span class="meta-val">5 Credits/Day · 8 Styles</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">Core Stack</span>
+            <span class="meta-val">Neon · ImageKit · OpenAI</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">Governance &amp; QA</span>
+            <span class="meta-val">CodeRabbit · EAS Simulators</span>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  <div class="doc-shell">
+    <!-- Desktop Sticky Table of Contents -->
+    <aside class="toc-rail" aria-label="Document Contents">
+      <h2 class="toc-heading">Contents</h2>
+      <nav>
+        <ul class="toc-list" id="toc-list">
+          <li><a class="toc-link is-active" href="#sec-overview"><span class="toc-num">01</span><span>Overview &amp; V1 Scope</span></a></li>
+          <li><a class="toc-link" href="#sec-architecture"><span class="toc-num">02</span><span>7-Layer Architecture</span></a></li>
+          <li><a class="toc-link" href="#sec-comparison"><span class="toc-num">03</span><span>Service Comparison Matrix</span></a></li>
+          <li><a class="toc-link" href="#sec-pipeline"><span class="toc-num">04</span><span>6-Stage Photo Pipeline</span></a></li>
+          <li><a class="toc-link" href="#sec-database"><span class="toc-num">05</span><span>Neon Schema &amp; Compliance</span></a></li>
+          <li><a class="toc-link" href="#sec-imagekit"><span class="toc-num">06</span><span>ImageKit Media Lab</span></a></li>
+          <li><a class="toc-link" href="#sec-workflow"><span class="toc-num">07</span><span>8-Phase Agentic Loop</span></a></li>
+          <li><a class="toc-link" href="#sec-prompts"><span class="toc-num">08</span><span>Prompt Frameworks</span></a></li>
+          <li><a class="toc-link" href="#sec-code"><span class="toc-num">09</span><span>Env &amp; Code Integrations</span></a></li>
+          <li><a class="toc-link" href="#sec-sources"><span class="toc-num">10</span><span>Source Verification</span></a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="doc-main">
+      <!-- Mobile TOC Jump -->
+      <div class="mobile-toc">
+        <label class="mobile-toc-label" for="mobile-toc-select">Jump to Section</label>
+        <select class="mobile-toc-select" id="mobile-toc-select" onchange="jumpToSection(this.value)">
+          <option value="#sec-overview">01 · Overview &amp; V1 Scope</option>
+          <option value="#sec-architecture">02 · 7-Layer Architecture</option>
+          <option value="#sec-comparison">03 · Service Comparison Matrix</option>
+          <option value="#sec-pipeline">04 · 6-Stage Photo Pipeline</option>
+          <option value="#sec-database">05 · Neon Schema &amp; Compliance</option>
+          <option value="#sec-imagekit">06 · ImageKit Media Lab</option>
+          <option value="#sec-workflow">07 · 8-Phase Agentic Loop</option>
+          <option value="#sec-prompts">08 · Prompt Frameworks</option>
+          <option value="#sec-code">09 · Env &amp; Code Integrations</option>
+          <option value="#sec-sources">10 · Source Verification</option>
+        </select>
+      </div>
+
+      <!-- SECTION 01: OVERVIEW & V1 SCOPE -->
+      <section class="doc-section" id="sec-overview">
+        <div class="section-head">
+          <div class="section-kicker">Section 01 · Product Concept &amp; Repository Footprint</div>
+          <h2 class="section-title">Strict <strong>V1 Scope</strong> Turns Existing AI APIs into a Ship-Ready Mobile Product</h2>
+          <p class="section-intro">
+            Rather than training proprietary vision models or provisioning GPU clusters, Home AI orchestrates managed cloud primitives around a single high-value user loop: snap a room, pick a style, compare before and after, and share or upscale.
+          </p>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-tile is-primary">
+            <div class="kpi-label">Market Reference Benchmark</div>
+            <div class="kpi-val">$800,000/mo</div>
+            <div class="kpi-note">Reported monthly revenue of the reference HomeAI mobile app</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">V1 Account Quota</div>
+            <div class="kpi-val">5 / day</div>
+            <div class="kpi-note">Free generations per account across 8 curated design styles</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Reference Launch Velocity</div>
+            <div class="kpi-val">14 days</div>
+            <div class="kpi-note">Founder build-to-App Store timeline; first paying user on Day 5</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Gallery Bandwidth Reduction</div>
+            <div class="kpi-val">Up to 90%</div>
+            <div class="kpi-note">Achieved via ImageKit URL transforms (w-400, q-80, f-auto)</div>
+          </div>
+        </div>
+
+        <div class="split-grid">
+          <div class="panel">
+            <h3 class="subhead" style="margin-top:0;">Core V1 User Journey</h3>
+            <p class="prose">
+              According to the project specification and masterclass walkthrough, V1 intentionally excludes paywall billing complexity and multi-theme toggles (shipping Dark Mode first) to validate demand quickly:
+            </p>
+            <ol style="padding-left:1.25rem; margin:0; color:var(--on-surface-variant);">
+              <li><strong>Authenticate &amp; Allocate Quota:</strong> Sign in via Email/Password, Google OAuth, or Apple Sign-In; receive 5 daily generation credits tracked in Postgres.</li>
+              <li><strong>Capture or Select Photo:</strong> Shoot a bedroom, kitchen, living room, or empty room using device camera or pick from media library.</li>
+              <li><strong>Select Style &amp; Trigger Redesign:</strong> Pick from 8 styles (e.g., Luxury, Minimalist) and dispatch the room URL to the server proxy.</li>
+              <li><strong>Inspect Before/After Slider:</strong> View the redesigned room preserving exact walls and ceiling geometry via an interactive comparison slider.</li>
+              <li><strong>History, HD Upscale &amp; Watermarked Share:</strong> Browse saved designs with blurred placeholders, upscale to HD on demand, or share with an automatic logo overlay.</li>
+            </ol>
+            <span class="source-tag">Sources: Техническая документация проекта Interior Designer AI · Build an Interior Designer AI App with Claude</span>
+          </div>
+
+          <div class="panel">
+            <h3 class="subhead" style="margin-top:0;">Repository Composition (home-ai)</h3>
+            <p style="font-size:0.875rem; color:var(--on-surface-variant); margin-top:0;">
+              Language breakdown across the public repository (9 commits, 3 branches; includes Expo TypeScript app, serverless functions, and static legal/landing site):
+            </p>
+            <div class="chart-box" style="min-height: 220px;">
+              <canvas id="repoChart" aria-label="GitHub repository language distribution chart"></canvas>
+            </div>
+            <span class="source-tag">Source: GitHub - burakorkmez/home-ai</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 02: 7-LAYER SYSTEM ARCHITECTURE -->
+      <section class="doc-section" id="sec-architecture">
+        <div class="section-head">
+          <div class="section-kicker">Section 02 · Interactive System Topology</div>
+          <h2 class="section-title">Seven Decoupled Layers Separate <strong>Client UI</strong> from <strong>Private Secrets</strong></h2>
+          <p class="section-intro">
+            Select any component node in the architecture diagram to inspect its runtime boundary, data ownership, and required credentials.
+          </p>
+        </div>
+
+        <div class="arch-layout">
+          <div class="arch-diagram-wrap">
+            <svg class="arch-svg" viewBox="0 0 740 440" role="img" aria-label="Interactive Home AI 7-Layer System Architecture Diagram">
+              <!-- Connectors -->
+              <path class="arch-connector" d="M 185 75 L 265 75" />
+              <path class="arch-connector" d="M 185 110 L 220 110 L 220 220 L 265 220" />
+              <path class="arch-connector" d="M 455 75 L 535 75" />
+              <path class="arch-connector" d="M 455 100 L 495 100 L 495 190 L 535 190" />
+              <path class="arch-connector" d="M 455 120 L 480 120 L 480 295 L 535 295" />
+              <path class="arch-connector" d="M 360 125 L 360 180" />
+              <path class="arch-connector-dashed" d="M 105 140 L 105 345 L 265 345" />
+              <path class="arch-connector-dashed" d="M 455 345 L 535 385" />
+
+              <!-- Node 1: Expo Client -->
+              <g class="arch-node is-selected" data-node="expo" tabindex="0" role="button" aria-label="Inspect Frontend Client: Expo and React Native" onclick="selectArchNode('expo')" onkeydown="handleArchKey(event, 'expo')">
+                <rect class="node-box" x="20" y="40" width="165" height="98" rx="3" />
+                <text class="node-title" x="32" y="65">1. Expo / React Native</text>
+                <text class="node-sub" x="32" y="84">EXPO ROUTER · TYPESCRIPT</text>
+                <text class="node-sub" x="32" y="101">Camera, Slider, 3 Tabs</text>
+                <text class="node-sub" x="32" y="118">Client-Exposed Keys Only</text>
+              </g>
+
+              <!-- Node 2: Serverless Proxy & Functions -->
+              <g class="arch-node" data-node="proxy" tabindex="0" role="button" aria-label="Inspect Serverless Proxy and Functions" onclick="selectArchNode('proxy')" onkeydown="handleArchKey(event, 'proxy')">
+                <rect class="node-box" x="265" y="40" width="190" height="85" rx="3" />
+                <text class="node-title" x="277" y="65">2. Serverless API Proxy</text>
+                <text class="node-sub" x="277" y="84">/functions · SERVER-ONLY</text>
+                <text class="node-sub" x="277" y="101">Quota Check &amp; Key Guard</text>
+              </g>
+
+              <!-- Node 3: Neon Postgres + Auth -->
+              <g class="arch-node" data-node="neon" tabindex="0" role="button" aria-label="Inspect Neon Postgres, Better Auth, and Drizzle ORM" onclick="selectArchNode('neon')" onkeydown="handleArchKey(event, 'neon')">
+                <rect class="node-box" x="535" y="30" width="185" height="95" rx="3" />
+                <text class="node-title" x="547" y="55">3. Neon + Better Auth</text>
+                <text class="node-sub" x="547" y="74">DRIZZLE ORM · POSTGRES</text>
+                <text class="node-sub" x="547" y="91">5 Tables · Credits · OAuth</text>
+                <text class="node-sub" x="547" y="108">Cascade Account Delete</text>
+              </g>
+
+              <!-- Node 4: ImageKit CDN -->
+              <g class="arch-node" data-node="imagekit" tabindex="0" role="button" aria-label="Inspect ImageKit Media Storage and CDN" onclick="selectArchNode('imagekit')" onkeydown="handleArchKey(event, 'imagekit')">
+                <rect class="node-box" x="265" y="180" width="190" height="90" rx="3" />
+                <text class="node-title" x="277" y="205">4. ImageKit Media CDN</text>
+                <text class="node-sub" x="277" y="224">W400 · Q80 · F-AUTO · LQIP</text>
+                <text class="node-sub" x="277" y="241">Watermarks &amp; HD Upscale</text>
+                <text class="node-sub" x="277" y="258">Private Key on Server</text>
+              </g>
+
+              <!-- Node 5: OpenAI API -->
+              <g class="arch-node" data-node="openai" tabindex="0" role="button" aria-label="Inspect OpenAI Image Generation Engine" onclick="selectArchNode('openai')" onkeydown="handleArchKey(event, 'openai')">
+                <rect class="node-box" x="535" y="150" width="185" height="82" rx="3" />
+                <text class="node-title" x="547" y="175">5. OpenAI API Engine</text>
+                <text class="node-sub" x="547" y="194">DALL-E 3 · 1024x1024</text>
+                <text class="node-sub" x="547" y="211">10–15s Room Redesign</text>
+              </g>
+
+              <!-- Node 6: Resend & Legal Hosting -->
+              <g class="arch-node" data-node="comms" tabindex="0" role="button" aria-label="Inspect Resend Email and Cloudflare Pages Legal Hosting" onclick="selectArchNode('comms')" onkeydown="handleArchKey(event, 'comms')">
+                <rect class="node-box" x="535" y="255" width="185" height="85" rx="3" />
+                <text class="node-title" x="547" y="280">6. Resend &amp; Cloudflare</text>
+                <text class="node-sub" x="547" y="299">RESEND EMAILS · WRANGLER</text>
+                <text class="node-sub" x="547" y="316">legal/ Privacy &amp; Terms</text>
+              </g>
+
+              <!-- Node 7: Agentic Dev & QA -->
+              <g class="arch-node" data-node="agents" tabindex="0" role="button" aria-label="Inspect Agentic Tooling: Claude, CodeRabbit, and Expo Simulators" onclick="selectArchNode('agents')" onkeydown="handleArchKey(event, 'agents')">
+                <rect class="node-box" x="265" y="310" width="190" height="96" rx="3" />
+                <text class="node-title" x="277" y="335">7. Agentic Dev &amp; QA</text>
+                <text class="node-sub" x="277" y="354">CLAUDE PLAN MODE · UI</text>
+                <text class="node-sub" x="277" y="371">CodeRabbit PR Security</text>
+                <text class="node-sub" x="277" y="388">Expo Cloud Simulators</text>
+              </g>
+
+              <!-- Legend Footer inside SVG -->
+              <line class="arch-connector" x1="20" y1="422" x2="50" y2="422" />
+              <text x="58" y="426" fill="var(--on-surface-variant)" font-family="var(--font-label)" font-size="10">Runtime Data / API Flow</text>
+              <line class="arch-connector-dashed" x1="210" y1="422" x2="240" y2="422" />
+              <text x="248" y="426" fill="var(--on-surface-variant)" font-family="var(--font-label)" font-size="10">Build, CI/CD &amp; Legal Publishing Flow</text>
+            </svg>
+          </div>
+
+          <div class="arch-inspector" id="arch-inspector" aria-live="polite">
+            <div class="inspector-kicker" id="insp-kicker">Layer 01 · Mobile Client</div>
+            <h3 class="inspector-title" id="insp-title">Expo / React Native (TypeScript)</h3>
+            <p id="insp-desc" style="margin:0; color:var(--on-surface-variant); font-size:0.9375rem;">
+              Unified iOS and Android client built with Expo Router file-based routing (src/app) and Fast Refresh. Handles camera capture, gallery selection, loading states, and the interactive Before/After comparison slider.
+            </p>
+            <ul class="inspector-list" id="insp-bullets">
+              <li>Three primary tabs: Create, My Designs, and Profile.</li>
+              <li>Runs locally via npx expo or npx expo --tunnel with Expo Go QR preview.</li>
+              <li>Only receives EXPO_PUBLIC_* keys; never holds OpenAI or DB secrets.</li>
+            </ul>
+            <div class="meta-row">
+              <span class="meta-key">Config Files</span>
+              <span class="meta-val" id="insp-files">app.json, eas.json, src/app</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-key">Source Citation</span>
+              <span class="meta-val" id="insp-source">Expo documentation · home-ai repo</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 03: INTERACTIVE COMPONENT & SERVICE COMPARISON MATRIX -->
+      <section class="doc-section" id="sec-comparison">
+        <div class="section-head">
+          <div class="section-kicker">Section 03 · Multi-Dimensional Stack Matrix</div>
+          <h2 class="section-title">Interactive Component &amp; Service <strong>Comparison Table</strong></h2>
+          <p class="section-intro">
+            Filter every service, SDK, and agentic tool across five shared technical dimensions. Fields not specified in the notebook sources are explicitly labeled <strong>Unavailable</strong>. Click any row to inspect integration notes.
+          </p>
+        </div>
+
+        <div class="filter-toolbar" role="region" aria-label="Comparison Table Filters">
+          <div class="filter-grid">
+            <div class="field-group">
+              <label class="field-label" for="filter-search">Search Component / Role</label>
+              <input class="field-input" type="search" id="filter-search" placeholder="e.g. Drizzle, Watermark, PR" oninput="applyTableFilters()">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="filter-layer">Architectural Layer</label>
+              <select class="field-select" id="filter-layer" onchange="applyTableFilters()">
+                <option value="all">All Layers</option>
+                <option value="Frontend & Client">Frontend &amp; Client</option>
+                <option value="Database & Auth">Database &amp; Auth</option>
+                <option value="Media & CDN">Media &amp; CDN</option>
+                <option value="AI Engine">AI Engine</option>
+                <option value="Email & Comms">Email &amp; Comms</option>
+                <option value="Hosting & Legal">Hosting &amp; Legal</option>
+                <option value="AI Agents & QA">AI Agents &amp; QA</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="filter-security">Security Level</label>
+              <select class="field-select" id="filter-security" onchange="applyTableFilters()">
+                <option value="all">All Security Levels</option>
+                <option value="Client-Exposed Public">Client-Exposed Public</option>
+                <option value="Server-Only Secret">Server-Only Secret</option>
+                <option value="Governance / CI Audit">Governance / CI Audit</option>
+                <option value="Platform-Isolated">Platform-Isolated</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="filter-persistence">Data Persistence</label>
+              <select class="field-select" id="filter-persistence" onchange="applyTableFilters()">
+                <option value="all">All Persistence Types</option>
+                <option value="Persistent Relational DB">Persistent Relational DB</option>
+                <option value="Object / CDN Storage">Object / CDN Storage</option>
+                <option value="Ephemeral / Stateless">Ephemeral / Stateless</option>
+                <option value="Repository / Git">Repository / Git</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="filter-api">API Type</label>
+              <select class="field-select" id="filter-api" onchange="applyTableFilters()">
+                <option value="all">All API Types</option>
+                <option value="Native SDK / Client">Native SDK / Client</option>
+                <option value="Serverless SQL / ORM">Serverless SQL / ORM</option>
+                <option value="REST / HTTP API">REST / HTTP API</option>
+                <option value="CLI / Agentic Runner">CLI / Agentic Runner</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="filter-sdk">SDK Dependencies</label>
+              <select class="field-select" id="filter-sdk" onchange="applyTableFilters()">
+                <option value="all">All Dependencies</option>
+                <option value="named">Has Named SDK / CLI</option>
+                <option value="none">External / IDE Extension</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <button type="button" class="btn btn-secondary" onclick="resetTableFilters()">Reset Filters</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-status-bar">
+          <span id="table-count-label">Showing 11 of 11 components</span>
+          <span>Click column header to sort · Select a row for full spec</span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="comp-table" id="comp-table">
+            <thead>
+              <tr>
+                <th data-sort-col="name" aria-sort="none"><button type="button" class="sort-btn" onclick="sortTable('name')">Component <span aria-hidden="true">↕</span></button></th>
+                <th data-sort-col="layer" aria-sort="none"><button type="button" class="sort-btn" onclick="sortTable('layer')">Layer <span aria-hidden="true">↕</span></button></th>
+                <th data-sort-col="security" aria-sort="none"><button type="button" class="sort-btn" onclick="sortTable('security')">Security Level <span aria-hidden="true">↕</span></button></th>
+                <th data-sort-col="persistence" aria-sort="none"><button type="button" class="sort-btn" onclick="sortTable('persistence')">Data Persistence <span aria-hidden="true">↕</span></button></th>
+                <th data-sort-col="apiType" aria-sort="none"><button type="button" class="sort-btn" onclick="sortTable('apiType')">API Type <span aria-hidden="true">↕</span></button></th>
+                <th>SDK Dependencies</th>
+                <th>Reported Rate / Cost Cap</th>
+              </tr>
+            </thead>
+            <tbody id="comp-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="detail-drawer" id="comp-detail-drawer" aria-live="polite">
+          <div class="inspector-kicker" id="drawer-kicker">Selected Component Detail</div>
+          <h3 class="subhead" style="margin-top:0;" id="drawer-title">Select a row above to inspect environment keys, config files, and source evidence</h3>
+          <p id="drawer-body" style="margin:0; color:var(--on-surface-variant);">
+            Every component entry maps directly to the Home AI repository, backend setup guides, or agentic workflow documentation.
+          </p>
+        </div>
+      </section>
+
+      <!-- SECTION 04: 6-STAGE PHOTO PIPELINE -->
+      <section class="doc-section" id="sec-pipeline">
+        <div class="section-head">
+          <div class="section-kicker">Section 04 · End-to-End Request Lifecycle</div>
+          <h2 class="section-title">Six-Stage <strong>Photo Processing Pipeline</strong> &amp; Proxy Boundaries</h2>
+          <p class="section-intro">
+            Step through the synchronous and asynchronous boundaries of a single room redesign request. Binary images never touch Neon Postgres; private AI and media keys never touch the Expo client.
+          </p>
+        </div>
+
+        <div class="pipeline-nav" role="tablist" aria-label="6-Stage Photo Pipeline Steps">
+          <button type="button" class="stage-pill is-active" role="tab" aria-selected="true" onclick="selectStage(0)" id="stage-tab-0">
+            <span class="stage-num">Stage 01</span>
+            <span class="stage-label">Capture &amp; Style</span>
+          </button>
+          <button type="button" class="stage-pill" role="tab" aria-selected="false" onclick="selectStage(1)" id="stage-tab-1">
+            <span class="stage-num">Stage 02</span>
+            <span class="stage-label">ImageKit Upload</span>
+          </button>
+          <button type="button" class="stage-pill" role="tab" aria-selected="false" onclick="selectStage(2)" id="stage-tab-2">
+            <span class="stage-num">Stage 03</span>
+            <span class="stage-label">Server Proxy Call</span>
+          </button>
+          <button type="button" class="stage-pill" role="tab" aria-selected="false" onclick="selectStage(3)" id="stage-tab-3">
+            <span class="stage-num">Stage 04</span>
+            <span class="stage-label">Persist Result CDN</span>
+          </button>
+          <button type="button" class="stage-pill" role="tab" aria-selected="false" onclick="selectStage(4)" id="stage-tab-4">
+            <span class="stage-num">Stage 05</span>
+            <span class="stage-label">Neon DB &amp; Quota</span>
+          </button>
+          <button type="button" class="stage-pill" role="tab" aria-selected="false" onclick="selectStage(5)" id="stage-tab-5">
+            <span class="stage-num">Stage 06</span>
+            <span class="stage-label">Before/After Render</span>
+          </button>
+        </div>
+
+        <div class="stage-panel" id="stage-panel" role="tabpanel" aria-live="polite">
+          <div>
+            <div class="inspector-kicker" id="stage-kicker">Stage 01 of 06 · Client Capture</div>
+            <h3 class="subhead" style="margin-top:0;" id="stage-title">Room Photo Capture &amp; Style Selection in Expo</h3>
+            <p class="prose" id="stage-desc">
+              The user opens the Create tab in Expo, captures a photo of a bedroom, kitchen, living room, or empty space via device camera (or selects from media library), picks one of 8 interior styles (such as Luxury or Minimalist), and taps Generate Design.
+            </p>
+            <div class="stage-controls">
+              <button type="button" class="btn btn-ghost" id="stage-prev-btn" onclick="stepStage(-1)">Previous Stage</button>
+              <button type="button" class="btn btn-primary" id="stage-next-btn" onclick="stepStage(1)">Next Stage</button>
+            </div>
+          </div>
+          <div>
+            <ul class="kv-list" id="stage-meta">
+              <li><span class="meta-key">Execution Environment</span><span class="meta-val" style="text-align:left;">Expo React Native Client (iOS / Android)</span></li>
+              <li><span class="meta-key">Payload / Artifact</span><span class="meta-val" style="text-align:left;">Local image URI + room type + style preset</span></li>
+              <li><span class="meta-key">Security Rule</span><span class="meta-val" style="text-align:left;">Camera tested on physical device; simulator uses saved library photos</span></li>
+              <li><span class="meta-key">Source Citation</span><span class="meta-val" style="text-align:left;">Техническая документация проекта Interior Designer AI</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 05: NEON SCHEMA & APP STORE COMPLIANCE -->
+      <section class="doc-section" id="sec-database">
+        <div class="section-head">
+          <div class="section-kicker">Section 05 · Relational Data Model &amp; Store Governance</div>
+          <h2 class="section-title">Neon Postgres Schema, <strong>Better Auth</strong> &amp; Mandatory App Store Controls</h2>
+          <p class="section-intro">
+            Managed via Drizzle ORM (<code>drizzle.config.ts</code>) and <code>@neondatabase/serverless</code> (<code>neon.ts</code>), the database separates authentication state from room design history and enforces Apple App Store compliance rules.
+          </p>
+        </div>
+
+        <div class="schema-grid">
+          <div class="schema-card">
+            <h3 class="schema-title">user</h3>
+            <div style="font-size:0.8125rem; color:var(--on-surface-variant);">Core account identity, verification flag, and daily quota balance.</div>
+            <ul class="schema-cols">
+              <li>id (PK) · name · email</li>
+              <li>emailVerified (boolean)</li>
+              <li>image (OAuth avatar URL)</li>
+              <li>credits / daily quota (5/day)</li>
+            </ul>
+          </div>
+          <div class="schema-card">
+            <h3 class="schema-title">account</h3>
+            <div style="font-size:0.8125rem; color:var(--on-surface-variant);">Links Better Auth credentials and social OAuth providers.</div>
+            <ul class="schema-cols">
+              <li>id (PK) · userId (FK → user)</li>
+              <li>providerId (email, google, apple)</li>
+              <li>accountId · passwordHash</li>
+              <li>accessToken · refreshToken</li>
+            </ul>
+          </div>
+          <div class="schema-card">
+            <h3 class="schema-title">session</h3>
+            <div style="font-size:0.8125rem; color:var(--on-surface-variant);">Active authenticated mobile sessions and expiration tokens.</div>
+            <ul class="schema-cols">
+              <li>id (PK) · userId (FK → user)</li>
+              <li>token (unique session key)</li>
+              <li>expiresAt · ipAddress</li>
+              <li>userAgent</li>
+            </ul>
+          </div>
+          <div class="schema-card">
+            <h3 class="schema-title">verification</h3>
+            <div style="font-size:0.8125rem; color:var(--on-surface-variant);">One-time verification and password reset tokens (via Resend).</div>
+            <ul class="schema-cols">
+              <li>id (PK) · identifier</li>
+              <li>value (token / 6-digit code)</li>
+              <li>expiresAt</li>
+            </ul>
+          </div>
+          <div class="schema-card">
+            <h3 class="schema-title">designs</h3>
+            <div style="font-size:0.8125rem; color:var(--on-surface-variant);">Room transformation history referencing ImageKit URLs only.</div>
+            <ul class="schema-cols">
+              <li>id (PK) · userId (FK → user)</li>
+              <li>originalImageUrl (ImageKit)</li>
+              <li>generatedImageUrl (ImageKit)</li>
+              <li>roomType · style · createdAt</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel-tinted">
+          <h3 class="subhead" style="margin-top:0;">App Store Rejection Prevention Checklist</h3>
+          <p class="prose" style="margin-bottom:var(--space-md);">
+            The YouTube masterclass and technical specification highlight four non-negotiable App Store review requirements. Toggle items to verify your release readiness:
+          </p>
+          <div class="checklist">
+            <label class="check-item">
+              <input type="checkbox" checked onchange="updateComplianceCount()">
+              <span><strong>Sign in with Apple Parity:</strong> Required whenever Google OAuth or any third-party social login is offered.</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" checked onchange="updateComplianceCount()">
+              <span><strong>Cascade Delete Account:</strong> Profile screen must allow full user deletion, purging Neon Postgres records and ImageKit assets.</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" checked onchange="updateComplianceCount()">
+              <span><strong>Live Legal URLs:</strong> Profile links and App Store Connect metadata must resolve to hosted HTTPS Privacy Policy and Terms pages.</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" checked onchange="updateComplianceCount()">
+              <span><strong>Valid Support Email:</strong> Listed in both the hosted legal footer and App Store Connect submission form.</span>
+            </label>
+          </div>
+          <div style="margin-top:var(--space-sm); font-family:var(--font-label); font-size:var(--label-size); color:var(--primary);" id="compliance-status">
+            4 of 4 mandatory store compliance controls verified
+          </div>
+          <span class="source-tag">Sources: Техническая документация проекта Interior Designer AI · Build an Interior Designer AI App with Claude</span>
+        </div>
+      </section>
+
+      <!-- SECTION 06: IMAGEKIT MEDIA LAB & BEFORE/AFTER SLIDER -->
+      <section class="doc-section" id="sec-imagekit">
+        <div class="section-head">
+          <div class="section-kicker">Section 06 · Dynamic URL Transformations &amp; Core UI Mechanic</div>
+          <h2 class="section-title">ImageKit <strong>Media Lab</strong> &amp; Interactive Before/After Slider</h2>
+          <p class="section-intro">
+            Instead of writing custom server-side image processing pipelines, Home AI appends ImageKit URL transformation parameters directly on delivery. Test each transformation mode and drag the Before/After slider below.
+          </p>
+        </div>
+
+        <div class="lab-grid">
+          <div class="panel">
+            <h3 class="subhead" style="margin-top:0;">Select Transformation Mode</h3>
+            <div class="mode-tabs" role="tablist" aria-label="ImageKit Transformation Modes">
+              <button type="button" class="mode-btn is-active" role="tab" aria-selected="true" onclick="setIkMode('thumb', this)">Thumbnail (w-400)</button>
+              <button type="button" class="mode-btn" role="tab" aria-selected="false" onclick="setIkMode('lqip', this)">LQIP Blur</button>
+              <button type="button" class="mode-btn" role="tab" aria-selected="false" onclick="setIkMode('watermark', this)">Watermark Overlay</button>
+              <button type="button" class="mode-btn" role="tab" aria-selected="false" onclick="setIkMode('hd', this)">HD Upscale</button>
+            </div>
+
+            <div class="field-label" style="margin-bottom:var(--space-xs);">Generated ImageKit Delivery URL</div>
+            <div class="url-preview-box" id="ik-url-display">
+              &lt;EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT&gt;/tr:w-400,q-80,f-auto/designs/living_room_luxury.png
+            </div>
+
+            <ul class="kv-list" id="ik-specs">
+              <li><span class="meta-key">Parameters Applied</span><span class="meta-val" style="text-align:left;" id="ik-params">width: '400', quality: '80', format: 'auto' (WebP / AVIF)</span></li>
+              <li><span class="meta-key">App Screen Context</span><span class="meta-val" style="text-align:left;" id="ik-screen">My Designs History Grid</span></li>
+              <li><span class="meta-key">Measured / Documented Impact</span><span class="meta-val" style="text-align:left;" id="ik-impact">Reduces mobile gallery traffic by up to 90% with minimal visual loss</span></li>
+            </ul>
+            <span class="source-tag">Sources: Техническая документация проекта Interior Designer AI · Бэкенд архитектура ИИ</span>
+          </div>
+
+          <div class="panel">
+            <h3 class="subhead" style="margin-top:0;">Before / After Room Redesign Preview</h3>
+            <div class="compare-stage" id="compare-stage">
+              <!-- BEFORE LAYER (Empty Room Vector Schematic) -->
+              <div class="compare-layer" id="layer-before">
+                <svg viewBox="0 0 640 400" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-label="Before: Empty Room Geometry">
+                  <rect x="0" y="0" width="640" height="270" fill="var(--room-wall)" />
+                  <polygon points="0,270 110,210 530,210 640,270 640,400 0,400" fill="var(--room-floor)" />
+                  <line x1="110" y1="0" x2="110" y2="210" stroke="var(--outline)" stroke-width="2" />
+                  <line x1="530" y1="0" x2="530" y2="210" stroke="var(--outline)" stroke-width="2" />
+                  <line x1="110" y1="210" x2="530" y2="210" stroke="var(--outline)" stroke-width="2" />
+                  <!-- Window -->
+                  <rect x="235" y="55" width="170" height="115" fill="var(--surface)" stroke="var(--outline)" stroke-width="2" />
+                  <line x1="320" y1="55" x2="320" y2="170" stroke="var(--outline)" stroke-width="1.5" />
+                  <line x1="235" y1="112" x2="405" y2="112" stroke="var(--outline)" stroke-width="1.5" />
+                </svg>
+                <span class="compare-tag compare-tag-before">Before · Empty Room</span>
+              </div>
+
+              <!-- AFTER LAYER (Restyled Room Preserving Same Geometry) -->
+              <div class="compare-layer compare-after" id="layer-after">
+                <svg viewBox="0 0 640 400" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-label="After: AI Redesigned Room Preserving Walls and Ceiling">
+                  <rect x="0" y="0" width="640" height="270" fill="var(--room-restyle-wall)" />
+                  <polygon points="0,270 110,210 530,210 640,270 640,400 0,400" fill="var(--room-restyle-floor)" />
+                  <line x1="110" y1="0" x2="110" y2="210" stroke="var(--room-restyle-accent)" stroke-width="2" />
+                  <line x1="530" y1="0" x2="530" y2="210" stroke="var(--room-restyle-accent)" stroke-width="2" />
+                  <line x1="110" y1="210" x2="530" y2="210" stroke="var(--room-restyle-accent)" stroke-width="2" />
+                  <!-- Preserved Window with Curtains -->
+                  <rect x="235" y="55" width="170" height="115" fill="var(--surface-container)" stroke="var(--room-restyle-accent)" stroke-width="2" />
+                  <rect x="218" y="48" width="22" height="150" fill="var(--room-restyle-accent)" />
+                  <rect x="400" y="48" width="22" height="150" fill="var(--room-restyle-accent)" />
+                  <!-- Rug & Sofa Silhouette -->
+                  <polygon points="150,330 490,330 535,380 105,380" fill="var(--surface-container)" opacity="0.85" />
+                  <rect x="195" y="230" width="250" height="65" rx="4" fill="var(--room-restyle-accent)" />
+                  <rect x="205" y="210" width="230" height="28" rx="3" fill="var(--surface-container-high)" />
+                  <rect x="270" y="305" width="100" height="28" rx="2" fill="var(--code-bg)" />
+                  <!-- Pendant Lamp -->
+                  <line x1="320" y1="0" x2="320" y2="38" stroke="var(--surface-container)" stroke-width="2" />
+                  <polygon points="295,55 345,55 332,38 308,38" fill="var(--surface-container)" />
+                </svg>
+                <span class="compare-tag compare-tag-after" id="after-mode-badge">After · W400 Optimized</span>
+                <span class="watermark-overlay" id="watermark-badge">HOME AI · logo_watermark.png (150px SE)</span>
+              </div>
+
+              <div class="compare-divider" id="compare-divider" aria-hidden="true"></div>
+            </div>
+
+            <div class="slider-control-row">
+              <label class="field-label" for="compare-slider">Before / After Comparison Split (<span id="slider-pct">50%</span>)</label>
+              <input class="slider-range" type="range" id="compare-slider" min="5" max="95" value="50" oninput="updateCompareSlider(this.value)">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 07: 8-PHASE AGENTIC WORKFLOW & QA LOOP -->
+      <section class="doc-section" id="sec-workflow">
+        <div class="section-head">
+          <div class="section-kicker">Section 07 · Iterative Build &amp; Verification Loop</div>
+          <h2 class="section-title">Eight-Phase <strong>Agentic Development</strong> &amp; CodeRabbit QA Cycle</h2>
+          <p class="section-intro">
+            Features are built one at a time, checked manually in the simulator, audited by CodeRabbit on GitHub Pull Requests, and verified across cloud iOS/Android simulators via Expo Simulators.
+          </p>
+        </div>
+
+        <div class="phase-grid">
+          <div class="phase-card">
+            <div class="phase-num">Phase 01 · Plan Mode</div>
+            <h3 class="phase-title">Structured Co-Founder Interview</h3>
+            <p class="phase-desc">Switch Claude from Auto to Plan Mode. Run 4 batches of 3–6 questions covering stack, auth, quotas, and V1 scope; freeze decisions into <code>PLAN.md</code>.</p>
+          </div>
+          <div class="phase-card">
+            <div class="phase-num">Phase 02 · Local Setup</div>
+            <h3 class="phase-title">Expo Boilerplate &amp; Tunnel</h3>
+            <p class="phase-desc">Install Node.js and VS Code. Scaffold with <code>npx create-expo-app@latest</code> and preview live via iOS Simulator, Android Emulator, or Expo Go QR.</p>
+          </div>
+          <div class="phase-card">
+            <div class="phase-num">Phase 03 · UI Reference</div>
+            <h3 class="phase-title">Mock-Data UI from Pinterest</h3>
+            <p class="phase-desc">Attach Pinterest reference screenshots + <code>PLAN.md</code>. Build all screens with mock data first (~83 changed files); refine typography and slider behavior one change at a time.</p>
+          </div>
+          <div class="phase-card">
+            <div class="phase-num">Phase 04 · Feature PRs</div>
+            <h3 class="phase-title">CodeRabbit Security Governance</h3>
+            <p class="phase-desc">Push feature branches to GitHub. CodeRabbit audits 10k–20k line PR diffs for XSS, CSRF, unescaped email HTML, and logic bugs, issuing a unified fix prompt for Claude.</p>
+          </div>
+          <div class="phase-card">
+            <div class="phase-num">Phase 05 · Backend Stack</div>
+            <h3 class="phase-title">Neon, ImageKit, OpenAI &amp; Resend</h3>
+            <p class="phase-desc">Replace hardcoded mocks with real Postgres tables, Better Auth (Email, Google, Apple), ImageKit uploads, OpenAI <code>dall-e-3</code> calls, and Resend email keys.</p>
+          </div>
+          <div class="phase-card">
+            <div class="phase-num">Phase 06 · Store Polish</div>
+            <h3 class="phase-title">Compliance &amp; Media Polish</h3>
+            <p class="phase-desc">Add Profile settings, notifications, mandatory Delete Account cascade, Apple Sign-In parity, ImageKit <code>w-400/q-80/f-auto</code> thumbnails, watermarks, and HD upscaling.</p>
+          </div>
+          <div class="phase-card">
+            <div class="phase-num">Phase 07 · Legal &amp; Web</div>
+            <h3 class="phase-title">Audited Legal Pages on Cloudflare</h3>
+            <p class="phase-desc">Capture framed mockups via shots.so, build <code>legal/</code> landing + Privacy Policy + Terms via 3-stage code audit, and deploy via Wrangler CLI.</p>
+          </div>
+          <div class="phase-card">
+            <div class="phase-num">Phase 08 · Cloud QA &amp; EAS</div>
+            <h3 class="phase-title">Expo Simulators &amp; TestFlight</h3>
+            <p class="phase-desc">Run parallel cloud sessions (<code>eas simulator --platform ios</code>) for Agentic CI, attach screenshots/recordings to PRs, and ship with EAS Build / <code>npx testflight</code>.</p>
+          </div>
+        </div>
+        <span class="source-tag">Sources: Создание AI-приложений · Expo Simulators · Build an Interior Designer AI App with Claude</span>
+      </section>
+
+      <!-- SECTION 08: EXACT PROMPT FRAMEWORKS -->
+      <section class="doc-section" id="sec-prompts">
+        <div class="section-head">
+          <div class="section-kicker">Section 08 · Verbatim Prompt Templates</div>
+          <h2 class="section-title">Production <strong>Prompt Frameworks</strong> for Planning &amp; Legal Audits</h2>
+          <p class="section-intro">
+            These exact prompts prevent AI agents from guessing architectural stacks or fabricating generic legal boilerplate. Inspect and copy any framework below.
+          </p>
+        </div>
+
+        <div class="tab-bar" role="tablist" aria-label="Prompt Framework Selector">
+          <button type="button" class="tab-btn is-active" role="tab" aria-selected="true" onclick="selectPromptTab('plan', this)">1. Plan Mode Prompt</button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" onclick="selectPromptTab('tos', this)">2. Terms of Service (3-Stage)</button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" onclick="selectPromptTab('privacy', this)">3. Privacy Policy (3-Stage)</button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" onclick="selectPromptTab('redesign', this)">4. Redesign &amp; Workflow Prompts</button>
+        </div>
+
+        <div class="code-card" id="prompt-viewer">
+          <div class="code-card-head">
+            <span class="code-filename" id="prompt-filename">PLAN MODE PROMPT (18-Topic Discovery Interview)</span>
+            <button type="button" class="copy-btn" onclick="copyElementText('prompt-content', this)">Copy Prompt</button>
+          </div>
+          <pre class="code-pre" id="prompt-content"></pre>
+        </div>
+        <span class="source-tag" id="prompt-source">Source: PLAN MODE PROMPT</span>
+      </section>
+
+      <!-- SECTION 09: ENVIRONMENT SECRETS & CODE INTEGRATIONS -->
+      <section class="doc-section" id="sec-code">
+        <div class="section-head">
+          <div class="section-kicker">Section 09 · Credentials &amp; Production Implementation</div>
+          <h2 class="section-title">Environment Secrets (<code>.env.example</code> vs <code>.env.local</code>) &amp; <strong>Integration Code</strong></h2>
+          <p class="section-intro">
+            <code>.env.example</code> documents required keys without values and is committed to Git; <code>.env.local</code> stores live secrets locally and is excluded in <code>.gitignore</code>. Only <code>EXPO_PUBLIC_*</code> variables ship inside the mobile client bundle.
+          </p>
+        </div>
+
+        <div class="code-card">
+          <div class="code-card-head">
+            <span class="code-filename">.env.example / .env.local Template</span>
+            <button type="button" class="copy-btn" onclick="copyElementText('code-env', this)">Copy .env</button>
+          </div>
+          <pre class="code-pre" id="code-env"># Neon Postgres Database Connection (Server-Only)
+DATABASE_URL="YOUR_NEON_DATABASE_URL_HERE"
+
+# OpenAI API Engine (Server-Only)
+OPENAI_API_KEY="YOUR_OPENAI_API_KEY_HERE"
+
+# ImageKit Developer Credentials (Private Key requires 6-digit email verification)
+EXPO_PUBLIC_IMAGEKIT_PUBLIC_KEY="YOUR_IMAGEKIT_PUBLIC_KEY_HERE"
+EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT="YOUR_IMAGEKIT_URL_ENDPOINT_HERE"
+IMAGEKIT_PRIVATE_KEY="YOUR_IMAGEKIT_PRIVATE_KEY_HERE"
+
+# Google Auth Client IDs
+EXPO_PUBLIC_GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID_HERE"
+GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET_HERE"
+
+# Resend Transactional Email Service (Server-Only)
+RESEND_API_KEY="YOUR_RESEND_API_KEY_HERE"</pre>
+        </div>
+
+        <div class="split-grid">
+          <div class="code-card">
+            <div class="code-card-head">
+              <span class="code-filename">neon.ts &amp; drizzle.config.ts</span>
+              <button type="button" class="copy-btn" onclick="copyElementText('code-neon', this)">Copy Code</button>
+            </div>
+            <pre class="code-pre" id="code-neon">// neon.ts
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is missing');
+}
+
+const sql = neon(process.env.DATABASE_URL);
+export const db = drizzle(sql);
+
+// drizzle.config.ts
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  schema: './src/db/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});</pre>
+          </div>
+
+          <div class="code-card">
+            <div class="code-card-head">
+              <span class="code-filename">imagekit.ts (Transforms &amp; Watermarks)</span>
+              <button type="button" class="copy-btn" onclick="copyElementText('code-ik', this)">Copy Code</button>
+            </div>
+            <pre class="code-pre" id="code-ik">import ImageKit from 'imagekit-javascript';
+
+const imagekit = new ImageKit({
+  publicKey: process.env.EXPO_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+  urlEndpoint: process.env.EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+});
+
+export const getThumbnailUrl = (imagePath: string): string =&gt; {
+  return imagekit.url({
+    path: imagePath,
+    transformation: [
+      {
+        width: '400',
+        quality: '80',
+        format: 'auto',
+      },
+    ],
+  });
+};
+
+export const getWatermarkedShareUrl = (imagePath: string): string =&gt; {
+  return imagekit.url({
+    path: imagePath,
+    transformation: [
+      {
+        overlayImage: 'logo_watermark.png',
+        overlayWidth: '150',
+        overlayFocus: 'southeast',
+      },
+    ],
+  });
+};</pre>
+          </div>
+        </div>
+
+        <div class="split-grid">
+          <div class="code-card">
+            <div class="code-card-head">
+              <span class="code-filename">openai.ts (Server Redesign Engine)</span>
+              <button type="button" class="copy-btn" onclick="copyElementText('code-openai', this)">Copy Code</button>
+            </div>
+            <pre class="code-pre" id="code-openai">import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export async function generateRoomRedesign(originalImageUrl: string, style: string) {
+  const prompt = `Professional interior redesign of the provided room in ${style} style, photorealistic 8k resolution, maintaining exact architecture walls and ceiling structure.`;
+
+  const response = await openai.images.generate({
+    model: 'dall-e-3',
+    prompt: prompt,
+    n: 1,
+    size: '1024x1024',
+    quality: 'standard',
+  });
+
+  return response.data[0].url;
+}</pre>
+          </div>
+
+          <div class="code-card">
+            <div class="code-card-head">
+              <span class="code-filename">CLI Deployment (Cloudflare, EAS, Simulators)</span>
+              <button type="button" class="copy-btn" onclick="copyElementText('code-cli', this)">Copy CLI</button>
+            </div>
+            <pre class="code-pre" id="code-cli"># 1. Local Expo Dev &amp; Tunnel Preview
+npx expo start
+npx expo --tunnel
+
+# 2. Cloud Agentic Simulator Verification
+eas simulator:availability --json
+eas simulator --platform ios
+
+# 3. Deploy legal/ (index.html, privacy-policy.html, terms-of-service.html)
+npx wrangler pages deploy legal-project-name home-ai-legal
+
+# 4. EAS Build, TestFlight &amp; Web Deploy
+npx eas-cli build --platform ios --auto-submit
+npx testflight
+npx eas-cli deploy</pre>
+          </div>
+        </div>
+        <span class="source-tag">Sources: Техническая документация проекта Interior Designer AI · Expo Simulators · Expo documentation</span>
+      </section>
+
+      <!-- SECTION 10: SOURCES & VERIFICATION -->
+      <section class="doc-section" id="sec-sources">
+        <div class="section-head">
+          <div class="section-kicker">Section 10 · Grounding &amp; Provenance</div>
+          <h2 class="section-title">Notebook <strong>Source Verification</strong> Index</h2>
+        </div>
+        <div class="panel">
+          <ul style="margin:0; padding-left:1.25rem; color:var(--on-surface-variant);">
+            <li><strong>Техническая документация проекта Interior Designer AI</strong> — Project specification, 6-stage pipeline, env templates, TypeScript code examples, ImageKit transforms, and Wrangler/EAS CLI commands.</li>
+            <li><strong>Build an Interior Designer AI App with Claude (FULL COURSE)</strong> — Codesistency YouTube walkthrough covering Plan Mode interview batches, Pinterest UI references, Neon/ImageKit/Google OAuth setup, CodeRabbit PR reviews, shots.so mockups, and App Store Connect requirements.</li>
+            <li><strong>PLAN MODE PROMPT</strong> — Full 8-rule, 18-topic technical co-founder discovery interview framework.</li>
+            <li><strong>Legal Pages Prompts</strong> — 3-stage codebase-audited Terms of Service and Privacy Policy prompt templates.</li>
+            <li><strong>Expo Simulators: Simulators built for agents</strong> — Cloud iOS/Android simulator sessions, Agentic CI, Issue-to-PR, Bug Triage, and PR evidence attachments.</li>
+            <li><strong>Expo documentation</strong> — <code>create-expo-app</code>, <code>npx testflight</code>, <code>npx eas-cli deploy</code>, and Expo Router workflows.</li>
+            <li><strong>GitHub - burakorkmez/home-ai</strong> — Repository folder layout (<code>src</code>, <code>functions</code>, <code>legal</code>, <code>design</code>, <code>PLAN.md</code>, <code>neon.ts</code>, <code>drizzle.config.ts</code>) and language metrics.</li>
+            <li><strong>Бэкенд архитектура ИИ / Облачная архитектура ИИ / Правовые документы ИИ / Создание AI-приложений</strong> — Synthesized architecture and legal workflow notes.</li>
+          </ul>
+        </div>
+      </section>
+
+      <footer class="doc-footer">
+        Interior Designer AI (Home AI) Technical Documentation Portal · All technical specifications, schemas, prompts, and metrics are grounded strictly in the provided notebook sources. Any architectural attribute not explicitly specified in the sources is labeled <strong>Unavailable</strong>.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // ---------- DATA DEFINITIONS (BACKTICK LITERALS FOR SAFETY) ----------
+
+    const ARCH_NODES = {
+      expo: {
+        kicker: `Layer 01 · Frontend & Client`,
+        title: `Expo / React Native (TypeScript)`,
+        desc: `Cross-platform mobile application built on a unified TypeScript codebase with Expo Router file-based routing (src/app) and Fast Refresh. Delivers the Create, My Designs, and Profile tabs plus the interactive Before/After comparison slider.`,
+        bullets: [
+          `Captures photos via device camera or selects room photos from local media library.`,
+          `Supports 8 interior design styles and enforces Dark Mode in V1.`,
+          `Uses only EXPO_PUBLIC_* environment variables; never holds private API keys.`
+        ],
+        files: `app.json, eas.json, src/app`,
+        source: `Expo documentation · GitHub home-ai`
+      },
+      proxy: {
+        kicker: `Layer 02 · Serverless Proxy`,
+        title: `Serverless API Functions (/functions)`,
+        desc: `Acts as the secure boundary between the Expo mobile app and privileged third-party backends. Validates user sessions, checks remaining daily credits, dispatches OpenAI requests, and handles account deletion.`,
+        bullets: [
+          `Holds OPENAI_API_KEY, IMAGEKIT_PRIVATE_KEY, and DATABASE_URL exclusively on the server.`,
+          `Decrements user generation quota (5/day) only after successful design persistence.`,
+          `Executes cascade deletion across Neon Postgres and ImageKit on account removal.`
+        ],
+        files: `functions/, .env.local`,
+        source: `Техническая документация проекта Interior Designer AI`
+      },
+      neon: {
+        kicker: `Layer 03 · Database & Authentication`,
+        title: `Neon Postgres + Better Auth + Drizzle ORM`,
+        desc: `Serverless PostgreSQL backend managing authentication providers, active sessions, user credit balances, and historic room redesign URLs without storing binary image BLOBs.`,
+        bullets: [
+          `Five core schema tables: user, account, session, verification, and designs.`,
+          `Supports Email/Password, Google OAuth, and mandatory Apple Sign-In parity.`,
+          `Configured via neon.ts (@neondatabase/serverless) and drizzle.config.ts.`
+        ],
+        files: `neon.ts, drizzle.config.ts, src/db/schema.ts`,
+        source: `Бэкенд архитектура ИИ · Техническая документация`
+      },
+      imagekit: {
+        kicker: `Layer 04 · Media Storage & CDN`,
+        title: `ImageKit Media Infrastructure`,
+        desc: `Stores original room uploads and AI-generated redesigns while executing dynamic URL transformations on the fly without custom image processing servers.`,
+        bullets: [
+          `Thumbnail optimization (w-400, q-80, f-auto) cuts gallery mobile traffic by up to 90%.`,
+          `Provides LQIP blurred preview placeholders, HD upscaling, and logo_watermark.png overlays.`,
+          `Private Key reveal in Developer Options requires a 6-digit email verification code.`
+        ],
+        files: `imagekit-javascript helper, .env.local`,
+        source: `Облачная архитектура ИИ · Техническая документация`
+      },
+      openai: {
+        kicker: `Layer 05 · AI Generation Engine`,
+        title: `OpenAI API (DALL-E 3 / Image Models)`,
+        desc: `Generates photorealistic room redesigns from the uploaded room photo and chosen interior style while preserving exact walls and ceiling geometry.`,
+        bullets: [
+          `Configured in code with model: 'dall-e-3', size: '1024x1024', quality: 'standard'.`,
+          `Typical generation latency is 10–15 seconds depending on model load and network.`,
+          `Eliminates custom model training and GPU infrastructure costs for V1.`
+        ],
+        files: `functions/ (openai SDK integration)`,
+        source: `Техническая документация проекта Interior Designer AI`
+      },
+      comms: {
+        kicker: `Layer 06 · Transactional Email & Legal Hosting`,
+        title: `Resend API & Cloudflare Pages`,
+        desc: `Resend handles transactional verification and password-reset emails via RESEND_API_KEY. Cloudflare Pages hosts the static legal/ landing page, Privacy Policy, and Terms of Service.`,
+        bullets: [
+          `legal/ folder holds index.html, privacy-policy.html, terms-of-service.html, and styles.css.`,
+          `Deployed globally for free via npx wrangler pages deploy.`,
+          `Live HTTPS URLs and support email are mandatory for App Store Connect approval.`
+        ],
+        files: `legal/, .env.local`,
+        source: `ИИ для Юрдокументов · Build with Claude transcript`
+      },
+      agents: {
+        kicker: `Layer 07 · AI Agents & Cloud QA`,
+        title: `Claude, CodeRabbit & Expo Simulators`,
+        desc: `AI-assisted engineering loop combining Plan Mode discovery, mock-data UI generation, CodeRabbit automated PR security reviews, and parallel cloud simulator testing.`,
+        bullets: [
+          `Claude generates PLAN.md, UI screens from Pinterest references, and audited legal pages.`,
+          `CodeRabbit scans PRs for XSS, CSRF, and unescaped email HTML, returning unified fix prompts.`,
+          `Expo Simulators (eas simulator --platform ios) record agent test runs directly onto PRs.`
+        ],
+        files: `PLAN.md, .claude/, AGENTS.md, CLAUDE.md`,
+        source: `Expo Simulators · Создание AI-приложений`
+      }
+    };
+
+    const COMPARISON_DATA = [
+      {
+        id: `expo`,
+        name: `Expo / React Native`,
+        role: `Cross-platform iOS & Android UI, routing, camera & slider`,
+        layer: `Frontend & Client`,
+        security: `Client-Exposed Public`,
+        persistence: `Ephemeral / Stateless`,
+        apiType: `Native SDK / Client`,
+        sdkGroup: `named`,
+        sdk: `expo, expo-router, react-native`,
+        costCap: `Free starter; $19/mo EAS paid tier for store publishing`,
+        notes: `Unified TypeScript codebase in src/app. Uses EXPO_PUBLIC_* keys only. Previewed via npx expo start or npx expo --tunnel.`
+      },
+      {
+        id: `neon`,
+        name: `Neon Postgres`,
+        role: `Serverless PostgreSQL DB for users, credits & design history`,
+        layer: `Database & Auth`,
+        security: `Server-Only Secret`,
+        persistence: `Persistent Relational DB`,
+        apiType: `Serverless SQL / ORM`,
+        sdkGroup: `named`,
+        sdk: `@neondatabase/serverless`,
+        costCap: `Free tier available; exact rate limits Unavailable`,
+        notes: `Stores 5 core tables (user, account, session, verification, designs). Configured in neon.ts via DATABASE_URL.`
+      },
+      {
+        id: `better-auth`,
+        name: `Better Auth + Drizzle ORM`,
+        role: `Email/Password, Google OAuth, Apple Sign-In & typed SQL schema`,
+        layer: `Database & Auth`,
+        security: `Server-Only Secret`,
+        persistence: `Persistent Relational DB`,
+        apiType: `Serverless SQL / ORM`,
+        sdkGroup: `named`,
+        sdk: `drizzle-orm, drizzle-kit (Better Auth)`,
+        costCap: `Open-source / Unavailable`,
+        notes: `Enforces App Store Apple Sign-In parity and cascade account deletion. Schema managed in drizzle.config.ts.`
+      },
+      {
+        id: `imagekit`,
+        name: `ImageKit`,
+        role: `Room image storage, CDN delivery, URL transforms & watermarks`,
+        layer: `Media & CDN`,
+        security: `Server-Only Secret`,
+        persistence: `Object / CDN Storage`,
+        apiType: `REST / HTTP API`,
+        sdkGroup: `named`,
+        sdk: `imagekit-javascript`,
+        costCap: `Free starter tier; exact bandwidth cap Unavailable`,
+        notes: `Uses EXPO_PUBLIC_IMAGEKIT_PUBLIC_KEY & URL endpoint on client, IMAGEKIT_PRIVATE_KEY on server. Up to 90% gallery traffic saved.`
+      },
+      {
+        id: `openai`,
+        name: `OpenAI API (DALL-E 3)`,
+        role: `Photorealistic interior room redesign generation`,
+        layer: `AI Engine`,
+        security: `Server-Only Secret`,
+        persistence: `Ephemeral / Stateless`,
+        apiType: `REST / HTTP API`,
+        sdkGroup: `named`,
+        sdk: `openai`,
+        costCap: `Pay-as-you-go ($5–$10 starter credit noted); 5 req/day app quota`,
+        notes: `Invoked server-side only with OPENAI_API_KEY. Configured at 1024x1024 standard quality (~10–15s latency).`
+      },
+      {
+        id: `resend`,
+        name: `Resend API`,
+        role: `Transactional verification & password-reset emails`,
+        layer: `Email & Comms`,
+        security: `Server-Only Secret`,
+        persistence: `Ephemeral / Stateless`,
+        apiType: `REST / HTTP API`,
+        sdkGroup: `named`,
+        sdk: `Resend SDK / API (RESEND_API_KEY)`,
+        costCap: `Unavailable in sources`,
+        notes: `Optional during early local prototype; required before public release for password reset and email verification flows.`
+      },
+      {
+        id: `cloudflare`,
+        name: `Cloudflare Pages + Wrangler`,
+        role: `Static hosting for landing page & audited legal documents`,
+        layer: `Hosting & Legal`,
+        security: `Client-Exposed Public`,
+        persistence: `Repository / Git`,
+        apiType: `CLI / Agentic Runner`,
+        sdkGroup: `named`,
+        sdk: `wrangler CLI`,
+        costCap: `Free hosting tier`,
+        notes: `Publishes legal/ (index.html, privacy-policy.html, terms-of-service.html, styles.css) to live HTTPS URLs for App Store Connect.`
+      },
+      {
+        id: `claude`,
+        name: `Claude (VS Code / Cursor)`,
+        role: `Plan Mode interviews, UI generation, backend wiring & legal audits`,
+        layer: `AI Agents & QA`,
+        security: `Governance / CI Audit`,
+        persistence: `Repository / Git`,
+        apiType: `CLI / Agentic Runner`,
+        sdkGroup: `none`,
+        sdk: `IDE Extension (No runtime SDK)`,
+        costCap: `$20/mo plan or $100/mo Max plan noted`,
+        notes: `Drives PLAN.md creation, mock-data UI generation from Pinterest screenshots, and 3-stage legal codebase audits.`
+      },
+      {
+        id: `coderabbit`,
+        name: `CodeRabbit AI`,
+        role: `Automated Pull Request code review & security vulnerability scanning`,
+        layer: `AI Agents & QA`,
+        security: `Governance / CI Audit`,
+        persistence: `Repository / Git`,
+        apiType: `CLI / Agentic Runner`,
+        sdkGroup: `none`,
+        sdk: `GitHub App Integration (No runtime SDK)`,
+        costCap: `14-day free trial of Advanced plan noted`,
+        notes: `Flags functional bugs, XSS/CSRF vectors, and unescaped email HTML; outputs consolidated fix prompts for Claude.`
+      },
+      {
+        id: `simulators`,
+        name: `Expo Simulators + EAS`,
+        role: `Cloud iOS/Android agent simulators, TestFlight & store submission`,
+        layer: `AI Agents & QA`,
+        security: `Platform-Isolated`,
+        persistence: `Ephemeral / Stateless`,
+        apiType: `CLI / Agentic Runner`,
+        sdkGroup: `named`,
+        sdk: `eas-cli, eas-simulator skill`,
+        costCap: `Account job concurrency limits apply; pricing Unavailable`,
+        notes: `Isolated cloud sessions post screenshots, recordings, and build links to PRs. Ships via npx testflight and npx eas-cli deploy.`
+      },
+      {
+        id: `higgsfield`,
+        name: `Higgsfield MCP + Shots.so`,
+        role: `Optional AI asset/video generation & iPhone mockup framing`,
+        layer: `Frontend & Client`,
+        security: `Client-Exposed Public`,
+        persistence: `Ephemeral / Stateless`,
+        apiType: `REST / HTTP API`,
+        sdkGroup: `none`,
+        sdk: `MCP Integration / Web Tool`,
+        costCap: `Higgsfield ~$60/mo paid noted (1K / 1080p caps); Shots.so Unavailable`,
+        notes: `Optional creative tooling used in masterclass for landing page video animations (Kling 3.0) and framed App Store screenshots.`
+      }
+    ];
+
+    const PIPELINE_STAGES = [
+      {
+        kicker: `Stage 01 of 06 · Client Capture`,
+        title: `Room Photo Capture & Style Selection in Expo`,
+        desc: `The user opens the Create tab in Expo, captures a photo of a bedroom, kitchen, living room, or empty space via device camera (or selects from media library), picks one of 8 interior styles (such as Luxury or Minimalist), and taps Generate Design.`,
+        env: `Expo React Native Client (iOS / Android)`,
+        payload: `Local image URI + room type + selected style preset`,
+        rule: `Camera tested on physical device; simulator uses saved library photos`,
+        source: `Техническая документация проекта Interior Designer AI`
+      },
+      {
+        kicker: `Stage 02 of 06 · Media Ingestion`,
+        title: `Upload Original Room Photo to ImageKit`,
+        desc: `The Expo client uploads the raw room photograph to ImageKit via the client SDK and receives a public CDN URL. Binary files are intentionally kept out of Neon Postgres to prevent database bloat and slow backups.`,
+        env: `Expo Client → ImageKit Cloud Storage`,
+        payload: `Multipart image file → Returned public ImageKit URL`,
+        rule: `Uses EXPO_PUBLIC_IMAGEKIT_PUBLIC_KEY & URL endpoint`,
+        source: `Техническая документация · Бэкенд архитектура ИИ`
+      },
+      {
+        kicker: `Stage 03 of 06 · Protected AI Execution`,
+        title: `Serverless Proxy Calls OpenAI API`,
+        desc: `Expo sends the public ImageKit URL and chosen style to a protected serverless route (/functions). The server verifies the Better Auth session, checks available credits, and invokes OpenAI (dall-e-3, 1024x1024) with an architecture-preserving prompt.`,
+        env: `Serverless Function → OpenAI API`,
+        payload: `Prompt + originalImageUrl + style → Generated image output (~10–15s)`,
+        rule: `OPENAI_API_KEY never leaves server environment`,
+        source: `Техническая документация · Build with Claude transcript`
+      },
+      {
+        kicker: `Stage 04 of 06 · Permanent Asset Storage`,
+        title: `Persist Generated Redesign in ImageKit`,
+        desc: `Because OpenAI generated image links are temporary, the serverless backend immediately stores the resulting interior redesign inside ImageKit for permanent CDN hosting and dynamic URL transformations.`,
+        env: `Serverless Function → ImageKit Upload API`,
+        payload: `Generated image asset → Permanent ImageKit CDN URL`,
+        rule: `Authenticated server-side using IMAGEKIT_PRIVATE_KEY`,
+        source: `Техническая документация проекта Interior Designer AI`
+      },
+      {
+        kicker: `Stage 05 of 06 · State & Quota Commit`,
+        title: `Record Design & Decrement Daily Credits in Neon Postgres`,
+        desc: `Via Drizzle ORM, the server inserts a new row into the designs table (linking userId, originalImageUrl, generatedImageUrl, and style) and decrements the user's daily generation balance (default 5/day) by 1.`,
+        env: `Serverless Function → Neon Postgres (Drizzle ORM)`,
+        payload: `SQL INSERT into designs + UPDATE user quota`,
+        rule: `Protected by DATABASE_URL; cascade deletion removes both DB rows & CDN assets`,
+        source: `Техническая документация · Облачная архитектура ИИ`
+      },
+      {
+        kicker: `Stage 06 of 06 · Client Delivery`,
+        title: `Render Interactive Before/After Slider & History`,
+        desc: `The serverless function returns the final ImageKit URLs to Expo. The loading indicator clears and the user compares the original and redesigned rooms side-by-side, triggers HD upscaling, or exports with a watermark overlay.`,
+        env: `Expo React Native Client`,
+        payload: `originalImageUrl + generatedImageUrl (w-400, q-80, f-auto, or HD)`,
+        rule: `Initial slider sweep runs 1–2 times then hands full control to user`,
+        source: `Build an Interior Designer AI App with Claude · Техническая документация`
+      }
+    ];
+
+    const IK_MODES = {
+      thumb: {
+        url: `<EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT>/tr:w-400,q-80,f-auto/designs/living_room_luxury.png`,
+        params: `width: '400', quality: '80', format: 'auto' (WebP / AVIF)`,
+        screen: `My Designs History Grid`,
+        impact: `Reduces mobile gallery traffic by up to 90% with minimal visual loss`,
+        badge: `After · W400 Optimized`,
+        filterCss: `none`,
+        watermark: false
+      },
+      lqip: {
+        url: `<EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT>/tr:w-40,bl-6,q-20/designs/living_room_luxury.png`,
+        params: `Low-resolution blurred preview placeholder (fade-in until full load)`,
+        screen: `My Designs Grid Initial Paint`,
+        impact: `Prevents abrupt card popping on slow mobile networks`,
+        badge: `After · LQIP Blur Preview`,
+        filterCss: `blur(6px)`,
+        watermark: false
+      },
+      watermark: {
+        url: `<EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT>/tr:oi-logo_watermark.png,ow-150,ofo-southeast/designs/living_room_luxury.png`,
+        params: `overlayImage: 'logo_watermark.png', overlayWidth: '150', overlayFocus: 'southeast'`,
+        screen: `Share / Export Redesign Flow`,
+        impact: `Applies brand attribution dynamically on share without modifying stored originals`,
+        badge: `After · Watermarked Share`,
+        filterCss: `none`,
+        watermark: true
+      },
+      hd: {
+        url: `<EXPO_PUBLIC_IMAGEKIT_URL_ENDPOINT>/tr:e-upscale/designs/living_room_luxury.png`,
+        params: `On-demand HD upscaling transformation parameter`,
+        screen: `Design Detail View (HD Toggle)`,
+        impact: `Delivers high-resolution detail on user request without bloating default grid payloads`,
+        badge: `After · HD Upscaled`,
+        filterCss: `contrast(1.06) saturate(1.05)`,
+        watermark: false
+      }
+    };
+
+    const PROMPTS = {
+      plan: {
+        filename: `PLAN MODE PROMPT (Senior Technical Co-Founder Discovery Interview)`,
+        source: `Source: PLAN MODE PROMPT · Build an Interior Designer AI App with Claude`,
+        text: `You are my senior technical co-founder and product architect. I'm about to build a
+new software project and I want us to be in complete alignment BEFORE any code or final plan is written. Your job right now is NOT to write code, scaffold, or produce a plan. Your job is to INTERVIEW me.
+
+## How to run this interview
+1. Ask me questions in small batches (3–6 at a time), grouped by topic. Do NOT dump all questions at once — it's overwhelming and I'll give shallow answers.
+2. Ask the highest-leverage, most ambiguous questions first — the ones where a wrong assumption would force a costly rewrite later.
+3. After each batch, briefly reflect back what you understood in 1–2 sentences, then continue to the next batch.
+4. When I'm vague, push back. Offer 2–3 concrete options with a recommended default and explain the trade-off, instead of accepting "whatever you think is best."
+5. If I make a choice that conflicts with something I said earlier, flag the conflict.
+6. Track open questions. If I say "I don't know," propose a sensible default, label it clearly as an ASSUMPTION, and move on so we don't get stuck.
+7. Prefer my explicitly stated tech stack and constraints. Do not silently swap tools.
+8. Stay version-accurate: if a library or framework version matters, confirm the exact version and check current docs rather than relying on memory.
+
+## Topics to cover (adapt to what's relevant; skip what doesn't apply)
+- Product & users: problem, user, single most important V1 job, explicit out-of-scope items
+- Core user journeys: screen-by-screen / step-by-step flows, first-run & "aha" moment
+- Data model: core entities, fields, relationships, source of truth, uniqueness/validation
+- Authentication & authorization: sign-in methods, tiers, first sign-up vs returning user
+- Architecture & boundaries: client/server split, API style, third-party responsibilities
+- Background work & async: triggers, retries, loading states, failure behavior
+- External integrations & APIs: rate limits, costs, keys, quotas, fallbacks
+- State & data flow: caching, optimistic updates, real-time vs polling, offline
+- Edge cases & failure modes: empty states, slow networks, abuse/spam, degradation
+- Permissions & platform specifics: camera/library permissions, iOS vs Android
+- Non-functional requirements: performance, security, PII, compliance, accessibility
+- Cost & limits: infra/API/AI token caps and limit-reached UX
+- Observability: logging, tracking, error monitoring (e.g., Sentry if selected)
+- Monetization: free vs paid, gated features, billing provider
+- Environments & delivery: local dev, staging, production, CI/CD
+- Testing & quality bar: required checks, V1 definition of "done"
+- Constraints & non-negotiables: deadlines, fixed tech stack
+- Future-proofing: V2 extensions without V1 over-engineering
+
+## When the interview is done
+Once you have enough to remove guesswork, STOP asking and produce:
+1. A concise spec summary: product, users, scope (in and out), core flows, data model, architecture, and integrations.
+2. A list of every ASSUMPTION we made where I didn't give a firm answer.
+3. A list of OPEN RISKS / unknowns that could still bite us.
+4. Only then, ask me: "Ready for me to turn this into an implementation plan?"
+
+Begin now by asking me your first batch of questions about the project I'm about to describe.`
+      },
+      tos: {
+        filename: `TERMS OF SERVICE PROMPT (3-Stage Codebase Audit)`,
+        source: `Source: Legal Pages Prompts · ИИ для Юрдокументов`,
+        text: `Act as a product and commercial-terms counsel. I need you to draft an accurate, production-ready Terms of Service for this project — but before writing a single line, I want you to thoroughly analyze the codebase so the terms reflect what the application actually offers and how it actually behaves, not generic boilerplate.
+
+Work in three stages:
+
+1. Investigate. Audit the repository end to end and build an evidence-backed inventory of every term-relevant detail: what the service actually does and who can use it; how accounts and authentication work; any paid plans, billing, subscriptions, or in-app purchases; user-generated content and who owns or licenses it; AI or automated features and the nature/limits of their output; third-party services whose own terms flow through to users; usage limits, rate limits, or acceptable-use boundaries enforced in code; and any mechanisms for suspension, termination, or data deletion. Cite the specific files and lines that support each finding so the terms are defensible.
+
+2. Confirm the gaps. List anything that materially affects the terms but isn't determinable from code alone — legal entity name, governing law and venue, age/eligibility requirements, pricing and refund policy, warranty and liability posture, dispute-resolution preferences, and contact details. Ask me about these, or state a clearly-labeled assumption I can correct.
+
+3. Draft. Write a complete, well-structured Terms of Service that includes only the sections that genuinely apply to this project — typically: acceptance of terms, eligibility, account responsibilities, acceptable use, user content and licensing, paid terms (if any), intellectual property, third-party services, AI/automated-output disclaimers (if applicable), disclaimers of warranty, limitation of liability, indemnification, suspension and termination, changes to the terms, governing law, and contact information. Never assert a right, restriction, fee, or obligation the product doesn't actually support, and never omit one it does. Use bracketed placeholders for anything still unconfirmed, and close with reviewer notes flagging assumptions and a reminder that the draft should be reviewed by a qualified attorney before publication.
+
+Prioritize accuracy and verifiability over completeness — a shorter set of terms that's true to the product is better than a thorough one that isn't.`
+      },
+      privacy: {
+        filename: `PRIVACY POLICY PROMPT (3-Stage Privacy & Compliance Audit)`,
+        source: `Source: Legal Pages Prompts · Правовые документы ИИ`,
+        text: `Act as a privacy and compliance engineer. I need you to draft an accurate, production-ready privacy policy for this project — but before writing a single line, I want you to thoroughly analyze the codebase so the policy reflects what the application actually does, not generic boilerplate.
+
+Work in three stages:
+
+1. Investigate. Audit the repository end to end and build an evidence-backed inventory of every privacy-relevant detail: what personal data is collected, where it's stored, how it's secured, which third-party services and SDKs receive it, what tracking or telemetry exists, and which user-facing controls (deletion, export, consent) are actually implemented. Cite the specific files and lines that support each finding so the policy is defensible.
+
+2. Confirm the gaps. List anything that materially affects the policy but isn't determinable from code alone — legal entity name, governing jurisdiction, contact details, retention periods, target audience. Ask me about these, or state a clearly-labeled assumption I can correct.
+
+3. Draft. Write a complete, well-structured privacy policy that includes only the sections that genuinely apply to this project. Never claim a data practice, safeguard, or user right that the code doesn't support, and never omit one that it does. Use bracketed placeholders for anything still unconfirmed, and close with reviewer notes flagging assumptions and a reminder that the draft should be reviewed by a qualified attorney before publication.
+
+Prioritize accuracy and verifiability over completeness — a shorter policy that's true to the code is better than a thorough one that isn't.`
+      },
+      redesign: {
+        filename: `INTERIOR REDESIGN & WORKFLOW PROMPTS`,
+        source: `Source: Техническая документация проекта Interior Designer AI · Build with Claude transcript`,
+        text: `// 1. OpenAI Interior Redesign System Prompt (Server-Side)
+const prompt = \`Professional interior redesign of the provided room in \${style} style, photorealistic 8k resolution, maintaining exact architecture walls and ceiling structure.\`;
+
+// 2. UI Generation from Pinterest Reference + Mock Data Prompt
+"We already have PLAN.md ready. Build the entire UI design inspired by the attached Pinterest reference image (match colors and feel without copying 100%). Use fake/mock data for now to simulate all screens, tabs, and the before/after slider before connecting real backend services."
+
+// 3. Iterative UI Refinement Pattern (One Change at a Time + Screenshot)
+"Only run the before/after indicator sweep once or twice on initial load, then leave it for the user to control interactively."
+"Make the Apple and Google logos vertically aligned with transparent backgrounds and tighten icon-to-label spacing."
+
+// 4. ImageKit Optimization & Legal Folder Scaffolding
+"Add ImageKit image optimization (w-400, q-80, f-auto) with tiny blurred placeholders to the My Designs grid, overlay logo_watermark.png on share links, and add an on-demand HD upscale toggle."
+"Create a /legal folder with index.html, privacy-policy.html, terms-of-service.html, and CSS matching our mobile theme, then deploy via Wrangler to Cloudflare Pages and link the live URLs in the Profile screen."`
+      }
+    };
+
+    // ---------- STATE ----------
+    let tableState = {
+      sortKey: null,
+      sortDir: `asc`,
+      selectedId: `expo`
+    };
+    let currentStage = 0;
+
+    // ---------- THEME TOGGLE ----------
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.getElementById(`theme-toggle-btn`);
+      const label = document.getElementById(`theme-toggle-label`);
+      if (!html || !btn || !label) return;
+      const isDark = html.getAttribute(`data-theme`) === `dark`;
+      const next = isDark ? `light` : `dark`;
+      html.setAttribute(`data-theme`, next);
+      btn.setAttribute(`aria-pressed`, String(!isDark));
+      label.textContent = next === `dark` ? `Switch to Light Surface` : `Switch to Dark Surface`;
+      renderRepoChart();
+    }
+
+    // ---------- TOC NAVIGATION ----------
+    function jumpToSection(hash) {
+      if (!hash) return;
+      const target = document.querySelector(hash);
+      if (target) {
+        target.scrollIntoView({ behavior: `smooth` });
+      }
+    }
+
+    function initTocObserver() {
+      const links = document.querySelectorAll(`.toc-link`);
+      const sections = document.querySelectorAll(`.doc-section`);
+      if (!links.length || !sections.length || typeof IntersectionObserver === `undefined`) return;
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = `#` + entry.target.id;
+            links.forEach((lnk) => {
+              lnk.classList.toggle(`is-active`, lnk.getAttribute(`href`) === id);
+            });
+            const sel = document.getElementById(`mobile-toc-select`);
+            if (sel) sel.value = id;
+          }
+        });
+      }, { rootMargin: `-20% 0px -65% 0px`, threshold: 0.05 });
+
+      sections.forEach((sec) => observer.observe(sec));
+    }
+
+    // ---------- REPO CHART (CHART.JS) ----------
+    let repoChartInstance = null;
+    function renderRepoChart() {
+      const canvas = document.getElementById(`repoChart`);
+      if (!canvas || typeof Chart === `undefined`) return;
+      const styles = getComputedStyle(document.documentElement);
+      const c1 = styles.getPropertyValue(`--data-1`).trim();
+      const c2 = styles.getPropertyValue(`--data-2`).trim();
+      const c3 = styles.getPropertyValue(`--data-3`).trim();
+      const c4 = styles.getPropertyValue(`--data-4`).trim();
+      const ink = styles.getPropertyValue(`--on-surface`).trim();
+      const muted = styles.getPropertyValue(`--on-surface-variant`).trim();
+      const grid = styles.getPropertyValue(`--outline-variant`).trim();
+
+      if (repoChartInstance) {
+        repoChartInstance.destroy();
+      }
+
+      repoChartInstance = new Chart(canvas, {
+        type: `bar`,
+        data: {
+          labels: [`TypeScript`, `HTML`, `CSS`, `JavaScript`],
+          datasets: [{
+            label: `Codebase Share (%)`,
+            data: [65.2, 26.5, 7.5, 0.8],
+            backgroundColor: [c1, c2, c3, c4],
+            borderWidth: 0,
+            barPercentage: 0.65
+          }]
+        },
+        options: {
+          indexAxis: `y`,
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.parsed.x}% of repository`
+              }
+            }
+          },
+          scales: {
+            x: {
+              max: 80,
+              grid: { color: grid },
+              ticks: {
+                color: muted,
+                font: { family: `'IBM Plex Mono', monospace`, size: 11 },
+                callback: (v) => `${v}%`
+              }
+            },
+            y: {
+              grid: { display: false },
+              ticks: {
+                color: ink,
+                font: { family: `'IBM Plex Mono', monospace`, size: 12 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ---------- ARCHITECTURE DIAGRAM INSPECTOR ----------
+    function selectArchNode(nodeKey) {
+      const data = ARCH_NODES[nodeKey];
+      if (!data) return;
+
+      document.querySelectorAll(`.arch-node`).forEach((el) => {
+        el.classList.toggle(`is-selected`, el.dataset.node === nodeKey);
+      });
+
+      const kicker = document.getElementById(`insp-kicker`);
+      const title = document.getElementById(`insp-title`);
+      const desc = document.getElementById(`insp-desc`);
+      const bullets = document.getElementById(`insp-bullets`);
+      const files = document.getElementById(`insp-files`);
+      const source = document.getElementById(`insp-source`);
+
+      if (kicker) kicker.textContent = data.kicker;
+      if (title) title.textContent = data.title;
+      if (desc) desc.textContent = data.desc;
+      if (files) files.textContent = data.files;
+      if (source) source.textContent = data.source;
+      if (bullets) {
+        bullets.innerHTML = data.bullets.map((b) => `<li>${b}</li>`).join(``);
+      }
+    }
+
+    function handleArchKey(evt, nodeKey) {
+      if (evt.key === `Enter` || evt.key === ` `) {
+        evt.preventDefault();
+        selectArchNode(nodeKey);
+      }
+    }
+
+    // ---------- COMPARISON TABLE FILTERING & SORTING ----------
+    function getSecurityBadgeClass(sec) {
+      if (sec === `Client-Exposed Public`) return `badge-public`;
+      if (sec === `Server-Only Secret`) return `badge-secret`;
+      if (sec === `Governance / CI Audit`) return `badge-gov`;
+      if (sec === `Platform-Isolated`) return `badge-isolated`;
+      return `badge-unavailable`;
+    }
+
+    function applyTableFilters() {
+      const qEl = document.getElementById(`filter-search`);
+      const lEl = document.getElementById(`filter-layer`);
+      const sEl = document.getElementById(`filter-security`);
+      const pEl = document.getElementById(`filter-persistence`);
+      const aEl = document.getElementById(`filter-api`);
+      const kEl = document.getElementById(`filter-sdk`);
+
+      const q = qEl ? qEl.value.trim().toLowerCase() : ``;
+      const layer = lEl ? lEl.value : `all`;
+      const security = sEl ? sEl.value : `all`;
+      const persistence = pEl ? pEl.value : `all`;
+      const api = aEl ? aEl.value : `all`;
+      const sdkGroup = kEl ? kEl.value : `all`;
+
+      let rows = COMPARISON_DATA.filter((item) => {
+        if (layer !== `all` && item.layer !== layer) return false;
+        if (security !== `all` && item.security !== security) return false;
+        if (persistence !== `all` && item.persistence !== persistence) return false;
+        if (api !== `all` && item.apiType !== api) return false;
+        if (sdkGroup !== `all` && item.sdkGroup !== sdkGroup) return false;
+        if (q) {
+          const hay = `${item.name} ${item.role} ${item.sdk} ${item.notes}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      if (tableState.sortKey) {
+        const key = tableState.sortKey;
+        const mult = tableState.sortDir === `asc` ? 1 : -1;
+        rows = rows.slice().sort((a, b) => a[key].localeCompare(b[key]) * mult);
+      }
+
+      renderTableRows(rows);
+    }
+
+    function renderTableRows(rows) {
+      const tbody = document.getElementById(`comp-tbody`);
+      const countEl = document.getElementById(`table-count-label`);
+      if (!tbody) return;
+
+      if (countEl) {
+        countEl.textContent = `Showing ${rows.length} of ${COMPARISON_DATA.length} components`;
+      }
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding: 1.5rem; text-align: center; color: var(--on-surface-variant);">No components match the active filter combination. Reset filters to view all 11 layers and services.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map((item) => {
+        const isSel = item.id === tableState.selectedId ? `is-row-selected` : ``;
+        const badgeCls = getSecurityBadgeClass(item.security);
+        const capHtml = item.costCap.includes(`Unavailable`)
+          ? `<span class="badge badge-unavailable">${item.costCap}</span>`
+          : `<span>${item.costCap}</span>`;
+        return `<tr class="${isSel}" tabindex="0" onclick="selectTableRow('${item.id}')" onkeydown="handleRowKey(event, '${item.id}')">
+          <td><span class="comp-name">${item.name}</span><span class="comp-sub">${item.role}</span></td>
+          <td>${item.layer}</td>
+          <td><span class="badge ${badgeCls}">${item.security}</span></td>
+          <td>${item.persistence}</td>
+          <td>${item.apiType}</td>
+          <td><code>${item.sdk}</code></td>
+          <td>${capHtml}</td>
+        </tr>`;
+      }).join(``);
+    }
+
+    function selectTableRow(id) {
+      tableState.selectedId = id;
+      const item = COMPARISON_DATA.find((r) => r.id === id);
+      const kicker = document.getElementById(`drawer-kicker`);
+      const title = document.getElementById(`drawer-title`);
+      const body = document.getElementById(`drawer-body`);
+
+      if (item && kicker && title && body) {
+        kicker.textContent = `${item.layer} · ${item.security}`;
+        title.textContent = `${item.name} — ${item.role}`;
+        body.innerHTML = `<strong>Integration Notes:</strong> ${item.notes} <br><strong>Dependencies:</strong> <code>${item.sdk}</code> · <strong>Data Persistence:</strong> ${item.persistence} · <strong>Reported Cost/Rate Cap:</strong> ${item.costCap}.`;
+      }
+      applyTableFilters();
+    }
+
+    function handleRowKey(evt, id) {
+      if (evt.key === `Enter` || evt.key === ` `) {
+        evt.preventDefault();
+        selectTableRow(id);
+      }
+    }
+
+    function sortTable(key) {
+      if (tableState.sortKey === key) {
+        tableState.sortDir = tableState.sortDir === `asc` ? `desc` : `asc`;
+      } else {
+        tableState.sortKey = key;
+        tableState.sortDir = `asc`;
+      }
+      document.querySelectorAll(`#comp-table thead th[data-sort-col]`).forEach((th) => {
+        const col = th.getAttribute(`data-sort-col`);
+        th.setAttribute(`aria-sort`, col === key ? (tableState.sortDir === `asc` ? `ascending` : `descending`) : `none`);
+      });
+      applyTableFilters();
+    }
+
+    function resetTableFilters() {
+      const ids = [`filter-search`, `filter-layer`, `filter-security`, `filter-persistence`, `filter-api`, `filter-sdk`];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.tagName === `INPUT`) el.value = ``;
+        else el.value = `all`;
+      });
+      tableState.sortKey = null;
+      applyTableFilters();
+    }
+
+    // ---------- 6-STAGE PHOTO PIPELINE ----------
+    function selectStage(idx) {
+      if (idx < 0 || idx >= PIPELINE_STAGES.length) return;
+      currentStage = idx;
+      const st = PIPELINE_STAGES[idx];
+
+      for (let i = 0; i < PIPELINE_STAGES.length; i++) {
+        const tab = document.getElementById(`stage-tab-${i}`);
+        if (tab) {
+          tab.classList.toggle(`is-active`, i === idx);
+          tab.setAttribute(`aria-selected`, String(i === idx));
+        }
+      }
+
+      const kicker = document.getElementById(`stage-kicker`);
+      const title = document.getElementById(`stage-title`);
+      const desc = document.getElementById(`stage-desc`);
+      const meta = document.getElementById(`stage-meta`);
+      const prevBtn = document.getElementById(`stage-prev-btn`);
+      const nextBtn = document.getElementById(`stage-next-btn`);
+
+      if (kicker) kicker.textContent = st.kicker;
+      if (title) title.textContent = st.title;
+      if (desc) desc.textContent = st.desc;
+      if (meta) {
+        meta.innerHTML = `
+          <li><span class="meta-key">Execution Environment</span><span class="meta-val" style="text-align:left;">${st.env}</span></li>
+          <li><span class="meta-key">Payload / Artifact</span><span class="meta-val" style="text-align:left;">${st.payload}</span></li>
+          <li><span class="meta-key">Security &amp; Boundary Rule</span><span class="meta-val" style="text-align:left;">${st.rule}</span></li>
+          <li><span class="meta-key">Source Citation</span><span class="meta-val" style="text-align:left;">${st.source}</span></li>
+        `;
+      }
+      if (prevBtn) prevBtn.disabled = idx === 0;
+      if (nextBtn) nextBtn.disabled = idx === PIPELINE_STAGES.length - 1;
+    }
+
+    function stepStage(delta) {
+      selectStage(currentStage + delta);
+    }
+
+    // ---------- COMPLIANCE CHECKLIST COUNTER ----------
+    function updateComplianceCount() {
+      const boxes = document.querySelectorAll(`.checklist input[type="checkbox"]`);
+      const status = document.getElementById(`compliance-status`);
+      if (!status) return;
+      let checked = 0;
+      boxes.forEach((b) => { if (b.checked) checked++; });
+      status.textContent = `${checked} of ${boxes.length} mandatory store compliance controls verified`;
+    }
+
+    // ---------- IMAGEKIT MEDIA LAB & BEFORE/AFTER SLIDER ----------
+    function setIkMode(modeKey, btnEl) {
+      const mode = IK_MODES[modeKey];
+      if (!mode) return;
+
+      document.querySelectorAll(`.mode-btn`).forEach((b) => {
+        b.classList.remove(`is-active`);
+        b.setAttribute(`aria-selected`, `false`);
+      });
+      if (btnEl) {
+        btnEl.classList.add(`is-active`);
+        btnEl.setAttribute(`aria-selected`, `true`);
+      }
+
+      const urlBox = document.getElementById(`ik-url-display`);
+      const paramsEl = document.getElementById(`ik-params`);
+      const screenEl = document.getElementById(`ik-screen`);
+      const impactEl = document.getElementById(`ik-impact`);
+      const badgeEl = document.getElementById(`after-mode-badge`);
+      const afterLayer = document.getElementById(`layer-after`);
+      const wmEl = document.getElementById(`watermark-badge`);
+
+      if (urlBox) urlBox.textContent = mode.url;
+      if (paramsEl) paramsEl.textContent = mode.params;
+      if (screenEl) screenEl.textContent = mode.screen;
+      if (impactEl) impactEl.textContent = mode.impact;
+      if (badgeEl) badgeEl.textContent = mode.badge;
+      if (afterLayer) afterLayer.style.filter = mode.filterCss;
+      if (wmEl) wmEl.classList.toggle(`is-visible`, mode.watermark);
+    }
+
+    function updateCompareSlider(val) {
+      const pct = Number(val);
+      const after = document.getElementById(`layer-after`);
+      const div = document.getElementById(`compare-divider`);
+      const label = document.getElementById(`slider-pct`);
+      if (after) after.style.clipPath = `inset(0 0 0 ${pct}%)`;
+      if (div) div.style.left = `${pct}%`;
+      if (label) label.textContent = `${pct}%`;
+    }
+
+    // ---------- PROMPT TABS ----------
+    function selectPromptTab(key, btnEl) {
+      const p = PROMPTS[key];
+      if (!p) return;
+
+      document.querySelectorAll(`.tab-btn`).forEach((b) => {
+        b.classList.remove(`is-active`);
+        b.setAttribute(`aria-selected`, `false`);
+      });
+      if (btnEl) {
+        btnEl.classList.add(`is-active`);
+        btnEl.setAttribute(`aria-selected`, `true`);
+      }
+
+      const fnEl = document.getElementById(`prompt-filename`);
+      const contentEl = document.getElementById(`prompt-content`);
+      const srcEl = document.getElementById(`prompt-source`);
+      if (fnEl) fnEl.textContent = p.filename;
+      if (contentEl) contentEl.textContent = p.text;
+      if (srcEl) srcEl.textContent = p.source;
+    }
+
+    // ---------- COPY TO CLIPBOARD (NO ALERT) ----------
+    function copyElementText(elId, btn) {
+      const el = document.getElementById(elId);
+      if (!el || !btn) return;
+      const text = el.textContent || ``;
+      const orig = btn.textContent;
+
+      function markCopied() {
+        btn.textContent = `Copied`;
+        setTimeout(() => { btn.textContent = orig; }, 1600);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(markCopied).catch(() => {
+          fallbackCopy(text, markCopied);
+        });
+      } else {
+        fallbackCopy(text, markCopied);
+      }
+    }
+
+    function fallbackCopy(text, done) {
+      const ta = document.createElement(`textarea`);
+      ta.value = text;
+      ta.style.position = `fixed`;
+      ta.style.opacity = `0`;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand(`copy`); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+
+    // ---------- INITIALIZATION ----------
+    document.addEventListener(`DOMContentLoaded`, () => {
+      initTocObserver();
+      renderRepoChart();
+      selectTableRow(`expo`);
+      selectStage(0);
+      selectPromptTab(`plan`, document.querySelector(`.tab-btn.is-active`));
+      updateCompareSlider(50);
+    });
+  </script>
+</body>
+</html>
